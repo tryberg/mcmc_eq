@@ -1,2 +1,2 @@
 # mcmc_eq
-MCMC inversion of quake location and velocity structure
+MCMC inversion of quake locations and velocity structure
