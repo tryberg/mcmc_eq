@@ -1,0 +1,18 @@
+#!/bin/tcsh
+
+set run = $1
+set n = `echo $1 | awk '{printf"%03d\n",$1}'`
+set start = `date +%s`
+
+echo Starting run $run with name $n >! S{$n}.lst
+
+echo ------------- Start >> S{$n}.lst
+date >> S{$n}.lst
+
+./mcmc_eq config_eqx.dat rjx-{$n}.out picks >>& S{$n}.lst
+
+echo ------------- Stop >> S{$n}.lst
+date >> SA{$n}.lst
+set stop = `date +%s`
+
+echo $start $stop | awk '{t=$2-$1; d=int(t/86400.0); h=int((t-d*86400.0)/3600.0); m=int((t-d*86400.0-h*3600.0)/60.0); s=int(t-d*86400.0-h*3600.0-m*60.0); printf"Runtime %03d days %02d:%02d:%02d\n", d, h, m, s}' >> S{$n}.lst

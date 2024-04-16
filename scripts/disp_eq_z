@@ -1,0 +1,72 @@
+#!/bin/csh
+
+\rm .gmt*
+gmtset MEASURE_UNIT INCH
+gmtset ANOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset HEADER_OFFSET 0.5c
+gmtset LABEL_FONT_SIZE 10
+gmtset COLOR_NAN  200/200/200
+
+setenv LC_NUMERIC C.UTF-8
+
+set f = resmcnx.dat
+
+set window = 5
+
+set z0 = `awk '{if (NR==7) print $1}' config_eqx.dat`
+
+
+foreach eqn ( 200 )
+
+echo $eqn
+
+set burnin = 200000
+set burnin = 80000
+
+set output = x.ps
+
+set xy = `awk '{if (($2=="'$eqn'") && ($1=="EZ")) printf"%f/%f/%f/%f\n", $3-"'$window'", $3+"'$window'", $4-"'$window'", $4+"'$window'"}' $f`
+set xz = `awk '{if (($2=="'$eqn'") && ($1=="EZ")) printf"%f/%f/%f/%f\n", $3-"'$window'", $3+"'$window'", $5-"'$window'", $5+"'$window'"}' $f`
+
+
+
+set dx = 0.125
+set dy = 0.125
+set dz = 0.125
+
+cat tmpx | egrep EQ | awk '{if (($3>(1*"'$burnin'")) && ($4=="'$eqn'")) print $0}' >! t77
+
+# x-y
+
+psbasemap -JX5 -R$xy -B2f1:"X [km]":/2f1:"Y [km]":swEN -K -P -Y5.75 >! $output
+awk '{print $6, $7}' t77 | awk '{print int($1/"'$dx'"), int($2/"'$dy'")}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$dx'", yold*"'$dy'", s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | xyz2grd -Gtmpxy.grd -R -I$dx/$dy -V
+set zmax = `grdinfo tmpxy.grd | egrep z_max | awk '{print $5}'`
+
+makecpt -Chot -Z -T0/$zmax/1 -D >! tmp.cpt
+
+grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EQ")) print $3, $4}' | psxy -JX -R -Sc0.075 -Glightblue  -K -O -M">" >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EQ")) print $3, $4, $6, $7}' | psxy -JX -R -Sc0.03 -Gblue -Exy0.01 -K -O -M">" >> $output
+
+# x-z
+
+psbasemap -JX5/-5 -R$xz -B2f1:"X [km] EQ $eqn":/2f1:"Z [km]":SwEn -K  -Y-5.0 -O >> $output
+
+awk '{print $6, $8-"'$z0'"}' t77 | awk '{print int($1/"'$dx'"), int($2/"'$dy'")}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$dx'", yold*"'$dy'"+"'$z0'", s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | xyz2grd -Gtmpxy.grd -R -I$dx/$dy -V
+
+set zmax = `grdinfo tmpxy.grd | egrep z_max | awk '{print $5}'`
+makecpt -Chot -Z -T0/$zmax/1 -D >! tmp.cpt
+grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EQ")) print $3, $5}' | psxy -JX -R -Sc0.175 -Glightblue  -K -O -M">" >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EQ")) print $3, $5, $6, $8}' | psxy -JX -R -Sc0.07 -Gblue -Exy0.01 -K -O -M">" >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EZ")) print $3, $5}' | psxy -JX -R -Sc0.175 -Glightgreen  -K -O -M">" >> $output
+cat $f | awk '{if (($2=="'$eqn'") && ($1=="EZ")) print $3, $5, $6, $8}' | psxy -JX -R -Sc0.07 -Ggreen -Exy0.01 -K -O -M">" >> $output
+
+
+echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> $output
+\mv $output eq{$eqn}.ps
+
+end
+
+\rm t77

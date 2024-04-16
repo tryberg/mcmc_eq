@@ -1,0 +1,98 @@
+#!/bin/csh
+
+\rm .gmt*
+gmtset MEASURE_UNIT INCH
+gmtset ANOT_FONT_SIZE 12
+gmtset HEADER_FONT_SIZE 12
+gmtset HEADER_OFFSET 0.5c
+gmtset LABEL_FONT_SIZE 16
+gmtset COLOR_NAN  200
+
+setenv LC_NUMERIC C.UTF-8
+
+
+set eq = 50000
+set bi = 200000
+
+set deci = `awk '{if (NR==31) print $1}' config_eqx.dat`
+
+
+touch tmp; \rm tmp; touch tmp
+foreach n ( rjx-???.out )
+ echo $n
+ awk '{if ($1=="mod") print $0}' $n >> tmp
+end
+
+awk '{if ($3>(1.0*"'$eq'")) print $0}' tmp >! tmpeq
+
+awk '{if ($3>(1.0*"'$bi'")) print $0}' tmp >! tmppbi
+set tmax = `awk '{print $5}' tmppbi | pshistogram -R0/10/0/110 -W0.00001 -Z1 -Q -G0 -K -O -V -Io | awk '{if ($2>50) printf"%f\n", $1}' | head -1`
+awk '{if ($5<(1.0*"'$tmax'")) print $0}' tmppbi >! tmppbibf
+
+# misfit
+awk '{print $5}' tmp | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mall.dat
+awk '{print $5}' tmpeq | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! malleq.dat
+awk '{print $5}' tmppbi | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mallpbi.dat
+awk '{print $5}' tmppbibf | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mallpbibf.dat
+
+# dim
+awk '{print $4}' tmp | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dall.dat
+awk '{print $4}' tmpeq | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dalleq.dat
+awk '{print $4}' tmppbi | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dallpbi.dat
+awk '{print $4}' tmppbibf | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dallpbibf.dat
+
+# misfit
+set xmin = 0
+set xmax = 350000
+
+set ymin = 0.02
+set ymax = 20.0
+set lymin = `echo $ymin | awk '{print log($1)}'`
+set lymax = `echo $ymax | awk '{print log($1)}'`
+
+psbasemap -JX5/3 -R$xmin/$xmax/$lymin/$lymax -B0n -K -P -Y2.0 >! evo.ps
+
+set dx = 0.03
+
+awk '{print $3,log($5)}' tmp | awk '{print int($1/"'$deci'"), int($2/"'$dx'")}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$deci'", yold*"'$dx'", s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | xyz2grd -Gtmp.grd -R$xmin/$xmax/$lymin/$lymax -I$deci/$dx -V
+set zmax = `grdinfo tmp.grd | egrep z_max | awk '{print $5}'`
+makecpt -Chot -Z -T0/$zmax/1 -D >! tmp.cpt
+grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
+echo $eq $lymin $eq $lymax | awk '{print $1, $2; print $3, $4; print ">"}' | psxy -JX -R -B -W1 -K -O -M">" >> evo.ps
+echo $bi $lymin $bi $lymax | awk '{print $1, $2; print $3, $4; print ">"}' | psxy -JX -R -B -W1 -K -O -M">" >> evo.ps
+psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models `pwd`":/2f3:"Misfit [s]":nSW -K -O >> evo.ps
+
+psbasemap -JX-1/3l -R0/1/$ymin/$ymax -B0/2f3nSEw -K -O -X5 >> evo.ps
+
+set max = `sort -n -k +2 malleq.dat | tail -1 | awk '{print $2}'`
+awk '{if ($1>0) print $2/"'$max'", $1}' malleq.dat | psxy -JX -R  -K -O -Gblack -L >> evo.ps
+awk '{if ($1>0) print $2/"'$max'", $1}' mallpbi.dat | psxy -JX -R  -K -O -Gblue -L >> evo.ps
+awk '{if ($1>0) print $2/"'$max'", $1}' mallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo.ps
+
+
+# dim
+set ymin = 0
+set ymax = 30
+psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B0n -K -P -X-5 -Y4 -O >> evo.ps
+
+awk '{print $3,$4}' tmp | awk '{print int($1/"'$deci'"), $2}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$deci'", yold, s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | xyz2grd -Gtmp.grd -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -V
+set zmax = `grdinfo tmp.grd | egrep z_max | awk '{print $5}'`
+makecpt -Chot -Z -T0/$zmax/1 -D >! tmp.cpt
+grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
+echo $eq $ymin $eq $ymax | awk '{print $1, $2; print $3, $4; print ">"}' | psxy -JX -R -B0 -W1 -K -O -M">" >> evo.ps
+echo $bi $ymin $bi $ymax | awk '{print $1, $2; print $3, $4; print ">"}' | psxy -JX -R -B0 -W1 -K -O -M">" >> evo.ps
+
+psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models":/10f5:"Dim":nSW -K -O >> evo.ps
+
+psbasemap -JX-1/2 -R0/1/$ymin/$ymax -B0/10f5nSEw -K -O -X5 >> evo.ps
+set max = `sort -n -k +2 dalleq.dat | tail -1 | awk '{print $2}'`
+awk '{print $2/"'$max'", $1}' dalleq.dat | psxy -JX -R  -K -O -Gblack -L >> evo.ps
+awk '{print $2/"'$max'", $1}' dallpbi.dat | psxy -JX -R  -K -O -Gblue -L >> evo.ps
+awk '{print $2/"'$max'", $1}' dallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo.ps
+
+
+echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> evo.ps
+\rm dall*dat mall*dat tmp*
+
+
+

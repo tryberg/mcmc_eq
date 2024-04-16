@@ -1,0 +1,71 @@
+#!/bin/csh
+
+\rm .gmt*
+gmtset MEASURE_UNIT INCH
+gmtset ANOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset HEADER_OFFSET 0.5c
+gmtset LABEL_FONT_SIZE 10
+gmtset COLOR_NAN  200/200/200
+setenv LC_NUMERIC C.UTF-8
+
+
+
+set cfg = config_eqx.dat
+
+set res = resmcnx.dat
+
+set z0 = `egrep Z0 $cfg | awk '{print $1}'`
+set nz = `egrep NZ $cfg | awk '{print $1}'`
+set dx = `cat $cfg | awk '{if (NR==1) print $1}'`
+
+set z1 = `echo $z0 $nz $dx | awk '{print $1+($2-2)*$3}'`
+
+
+
+egrep STAN $res >! res.dat
+egrep EQ   $res | awk '{z=$5; if (z<1.0*"'$z0'") z="'$z0'"; if (z>1.0*"'$z1'") z="'$z1'";print $1, $2, $3, $4, z, $6, $7, $8, $9, $10, $11}' >> res.dat
+egrep EZ   $res | awk '{z=$5; if (z<1.0*"'$z0'") z="'$z0'"; if (z>1.0*"'$z1'") z="'$z1'";print $1, $2, $3, $4, z, $6, $7, $8, $9, $10, $11}' >> res.dat
+egrep RES  $res >> res.dat
+egrep NOISE $res | awk '{print $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17}' >> res.dat
+
+
+# prepare pick file with that quake
+cat picks >! test
+
+
+./fw $cfg res.dat test > ! predictions
+
+awk '{print $0}' test > ! t0
+
+
+paste predictions t0 >! residuals.dat
+
+awk '{if ($1!="EVENT") print $1}' residuals.dat >! t
+~/bin/rms.linux t
+
+
+
+# reduced
+psbasemap -JX7/5 -R0/160/-2/22 -B50f10:"epi dist [km] quake":/5f1g100:"t - epi/8.0 [s]":SWen -K -P >! msftp.ps
+awk '{if ($7=="P") print $2, $5-$4-$2/8}' residuals.dat | psxy -JX -R -Sc0.025 -Gblue -K -O -V  >> msftp.ps
+awk '{if ($7=="P") print $2, $6-$2/8}' residuals.dat | psxy -JX -R -S+0.05  -K -O -V  >> msftp.ps
+awk '{if ($7=="S") print $2, $5-$4-$2/8}' residuals.dat | psxy -JX -R -Sc0.025 -Gred -K -O -V  >> msftp.ps
+awk '{if ($7=="S") print $2, $6-$2/8}' residuals.dat | psxy -JX -R -S+0.05  -K -O -V  >> msftp.ps
+
+
+psbasemap -JX7/4  -R-1.5/1.5/1/500 -B0.5f0.1g1000:"misfit dt [s]":/0SWen -K -O -Y6 >> msftp.ps
+
+
+awk '{if (($1!="EVENT") && ($7=="P") && ($15!=10)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/blue -K -O -F -S  >> msftp.ps
+awk '{if (($1!="EVENT") && ($7=="S") && ($15!=10)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/red -K -O -F -S  >> msftp.ps
+
+# pick classes
+#awk '{if (($1!="EVENT") && ($7=="P") && ($15==0)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/0/0/255 -K -O -F -S  >> msftp.ps
+#awk '{if (($1!="EVENT") && ($7=="P") && ($15==1)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/42/42/255 -K -O -F -S  >> msftp.ps
+#awk '{if (($1!="EVENT") && ($7=="P") && ($15==2)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/85/85/255 -K -O -F -S  >> msftp.ps
+#awk '{if (($1!="EVENT") && ($7=="P") && ($15==3)) print $1}' residuals.dat | pshistogram -JX -R -B0 -W0.01 -L1/128/128/255 -K -O -F -S  >> msftp.ps
+
+echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> msftp.ps
+
+\rm t residuals.dat predictions res.dat
