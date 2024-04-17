@@ -1,0 +1,41 @@
+0.4		# forward dx
+1000		# forward NX
+1000		# forward NY
+310		# forward NZ
+-200.0		# model starts at X0
+-200.0		# model starts at Y0
+-4.0		# model starts at Z0
+200		# max # of cells/layers
+2.0   		# minimum vel
+12.0		# maximum vel
+1.0   		# minimum vpvs
+3.0		# maximum vpvs
+0.001		# minimum noise
+10.0		# maximum noise
+-5.0		# min residual
+5.0		# max residual
+10.0		# sdev for x dummy
+10.0		# sdev for y dummy
+5.0		# sdev for z
+0.05		# sdev for vel
+0.02		# sdev for vp/vs
+0.01		# sdev for noise
+1.0 2		# sdev x EQ, factor for epicenter search accelaration
+1.0 		# sdev y EQ
+1.0		# sdev z EQ
+0.02		# sdev residual
+-0.05		# minimum layer thickness in fractions of dz, i <0 no LVZ !!! should be !=0
+1 0 0.0 0.0	# reference station + flag, =0: zero mean, =1: p fixed, =2: P&S fixed
+0		# Voronoi cells if = 0, triangulation if = 1
+50000 250000	# number of models in chain
+2000		# output every nth model
+-77	1	# if <0 true random search, otherwise from seed n, 0=str 1=eik
+QN QVRPBDMN	# model modification tests
+0 VRN		# 0-mcmc, 1-prior only, 2-output regular grid, 3-input from model file: V and/or Q R N, i.e 3 QV
+1 dummy 1 	# dummy
+5.0 0.5	0.03    # vp to start with
+1.9	0.2	# vp/vs to start with
+15 5		# cell number to start with
+1.0		# start_noise
+0.0 0.0		# delay & sdev to start with
+0.5 0.5		# start EQ location from center (horizontal) or surface (vertical) 1 for full space
