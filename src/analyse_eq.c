@@ -1,21 +1,7 @@
-/*
-     Program to calculate FD traveltimes for shot data (2D)
-     
-     model is defined on arbitrary points 
-     performs delauney triangulation of these points (meshing)
-     and generates FD grid from the mesh
-     
-     Written by Christian Haberland, GFZ Potsdam, July/August 2016
-     
-     uses Triangle routine by J.R Shewchuk and 
-     time_2d routine by Podvin & Lecomte
-     
-     compile:
+//   Program to analyse output from mcmc_eq 
 
- 
-     gcc -O -c mod_grd.c -o mod_grd.o ; gcc -O analyse_plain.c triangle.o mod_grd.o -o analyse_plain -lm 
-     
-*/
+// 190624 cleanup, misfit & interpol in common file
+
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -143,7 +129,7 @@ void gsearch(float data[Max_data], long nsamp, float *mean, float *sdev, float d
 {
 	float	datax[Max_data], datay[Max_data];
 	long	ncdf, i, flag;
-	float	m,s,m0,s0;
+	float	m,s;
 	float	avr0, sdev0, udb, ldb;
 	float	xx,mftc,mms0,mps0,m0sp,m0sm,mmsm,mmsp,mpsm,mpsp;
 
@@ -266,29 +252,28 @@ void stats(float data[Max_data],float data2[Max_data],int ndata,int *ndata2,floa
 
 int main(int argc, char *argv[])
 {
- int i,j,k, nbytes;
- float xmin, xmax, zmin, zmax;
+ int i,j,k;
+
  FILE *finp;
- struct Model model,modelx, temp_mod;
- FILE 		*fvpmodhead;		/* file with FD grid header	*/
+ struct Model model,temp_mod;
+
  struct GRDHEAD  gh;			/* FD grid header structure 	*/
  float rms;
  char *buf;
  char *c,*c2;
- int l, mcount, ii, jj;
- float *hsbuf;			/* velocity field (time_2d) 	*/
+ int l, mcount, ii;
  float vmin, vmax, dv,  vv, vvx;
  int ndata2;
- float fdummy,xx,yy,zz, xp[10000],zp[10000];
- int idummy,topo_flag,topo_shift;
- char   sdummy[1000],topo_file_name[1000];
+ float fdummy,xx,yy,zz;
+ int idummy;
+ char   sdummy[1000];
  FILE 		*config_file;		/* config file	*/
- FILE 		*topo_file;		/* topo file	*/
+
  char		    line[1024];
- int    *topo;
- int    pflag,kk,swap;
+
+ int    pflag;
  int **hcountp,**hcounts,ndv, ndvpvs;
- double helpx,tt,dt,dtp,dts;
+ double tt,dt,dtp,dts;
  int iip,iis,kkp,kks, noq, eqi, nos, sti;
  float pmean, pmean2, psdev, psdev2;
  float smean, smean2, ssdev, ssdev2;
@@ -525,7 +510,8 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	if (vv!=vvx) boundary[i]=boundary[i]+1;
 
 // check if value inrange
-	if (vv>vmax) vv=vmax; if (vv<vmin) vv=vmin;
+	if (vv>vmax) vv=vmax; 
+	if (vv<vmin) vv=vmin;
         vp[mcount][i]=vv;
 	j=(int) ((vv-vmin)/dv);
 	hcountp[j][i]=hcountp[j][i]+1;
@@ -540,7 +526,8 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	}
 
 // check if value in range
-	if (vv>vpvsmax) vv=vpvsmax; if (vv<vpvsmin) vv=vpvsmin;
+	if (vv>vpvsmax) vv=vpvsmax; 
+	if (vv<vpvsmin) vv=vpvsmin;
         vs[mcount][i]=vv;
 	j=(int) ((vv-vpvsmin)/dvpvs);	
 	hcounts[j][i]=hcounts[j][i]+1;

@@ -1,21 +1,7 @@
-/*
-     Program to calculate FD traveltimes for shot data (2D)
-     
-     model is defined on arbitrary points 
-     performs delauney triangulation of these points (meshing)
-     and generates FD grid from the mesh
-     
-     Written by Christian Haberland, GFZ Potsdam, July/August 2016
-     
-     uses Triangle routine by J.R Shewchuk and 
-     time_2d routine by Podvin & Lecomte
-     
-     compile:
-     cc -DTRILIBRARY -O -c triangle.c 
-     gcc -O -c time_2d.c -o time_2d.o ; gcc -O -c mod_grd.c -o mod_grd.o ;  gcc -O mcmc_2d_tomo.c time_2d.o triangle.o mod_grd.o -o mcmc_2d_tomo -lm 
+// Program to calculate P&S traveltimes from gridded model
 
+// 190624 cleanup, misfit & interpol in common file
 
-*/
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -25,14 +11,13 @@
 
 #include <string.h>
 #include "mc.h"
-int TRIA, DR, aflag;
 
+int TRIA, DR, aflag;
 
 FILE *fpin;
 int read_mcmcdata (FILE *f, struct DATA *d);
 void write_mcmcdata (struct DATA *d, int ne);
-float cal_fit_newx (struct Model *m, struct DATA *d, int ne, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal); 
-float cal_fit_new (struct Model *m, struct DATA *d, int ne, float **tttp, float **ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3, int flag, int eikonal); 
+float cal_fit_newx (struct Model *m, struct DATA *d, int ne, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
 float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0);
 float dst (float x1, float x2, float y1, float y2);
 void setup_table (struct Model *m, float **ttt, struct GRDHEAD gh, int ps);
@@ -43,7 +28,11 @@ void copy_model(struct Model *dest, struct Model *src);
 int find_neighbor_cell(struct Model *model, int n);
 int find_in_cell(struct Model *modx, float x);
 void model_to_hsbuf(struct Model *modx, struct GRDHEAD gh, float *hsbuf);
-//int gettimeofday(struct timeval *tv, struct timezone *tz);
+
+#include "interpol.c"
+#include "misfit.c"
+
+
 
 // Method to allocate a 3D array of floats
 float*** make_3d_array(int nx, int ny, int nz) {
@@ -66,7 +55,7 @@ float*** make_3d_array(int nx, int ny, int nz) {
 // Method to allocate a 2D array of floats
 float** make_2d_array(int nx, int ny) {
     float** arr;
-    int i,j;
+    int i;
 
     arr = (float **) malloc(nx*sizeof(float*));
 
@@ -160,52 +149,39 @@ unsigned int get_seed (void)
 
 int main(int argc, char *argv[])
 {
- int i,j,k,testcase,index,ideath,start_cell_number,sdev_start_cell_number, topo_shift, max_dim;
- double new_ll, new2_ll, old_ll;
- float sdevx, sdevy, sdevz, sdevvp, sdevvs, sdevn;
- float xmin, xmax, ymin, ymax, zmin, zmax, vpmin, vpmax, vsmin,vsmax;
- float dz, dy, dx, dvp, dvs, dns, dnp;
- float xx,yy,zz,start_vp, sdev_start_vp, start_noise;
- double log_fac;
- float alpha12,alpha13, alpha32, dr_fac, l2, q1;
- float newx, newz;
- float noise_min, noise_max, dn;
- double new_misfit, new2_misfit, old_misfit, new_rms, new2_rms, old_rms, best_rms;
- char *decision, ctestcase;
- int n_picks,no, acce;
- float x0,x1,x2,z0,z1,z2, dxnew, dynew, dznew, dvnew, sum;
+ int i,j,start_cell_number,sdev_start_cell_number, topo_shift, max_dim;
+ double old_ll;
+ float sdevx, sdevy, sdevz, sdevvp, sdevn;
+ float xmin, xmax, ymin, ymax, zmin, zmax, vpmin, vpmax;
+ float start_vp, sdev_start_vp, start_noise;
+ float dr_fac;
+ float noise_min, noise_max;
+ double old_misfit, old_rms;
  int deci,j_max_start, j_max_main,true_random,topo_flag;
- struct timeval tv;
-// struct timezone tz;
- int nmod,nsa,nsr,npa,npr,nba,nbr,nda,ndr,nna,nnr,nra,nrr,nma,nmr,nqa,nqr;
 
  char		    line[1024], ds[1000];
  char   dstring_start[1000],dstring_main[1000], topo_file_name[1000];
  FILE 		*config_file;		/* config file	*/
- FILE 		*topo_file;		/* topo file	*/
+
 // CH
  FILE 		*finp;			/* data file 			*/
 
  struct GRDHEAD  gh;			/* FD grid header structure 	*/
  struct DATA 	*s;		/*  data 			*/
- int 	nshot, err=0;
- int    *topo;
- int	fl_s_n, fl_s_v, fl_s_c;
-struct Model old_model, new_model, best_model;
+
+
+ struct Model old_model;
  float mfp0, mfs0, mfp1, mfs1, mfp2, mfs2, mfp3, mfs3;
- float xs, ys, zs, dt;
+
  float sdevxs, sdevys, sdevzs, sdevresidual;
  float residual_min, residual_max;
 
- int n_ppicks,n_spicks, n_ppicks0, n_spicks0, n_ppicks1, n_spicks1, n_ppicks2, n_spicks2, n_ppicks3, n_spicks3, iq, ne;
+ int n_ppicks,n_spicks, n_ppicks0, n_spicks0, n_ppicks1, n_spicks1, n_ppicks2, n_spicks2, n_ppicks3, n_spicks3, ne;
 
 
- float 	**tttp, **ttts;		/* travel time (in sec.) table. ttt[source depth km][distance km]  */
- float 	**tttp_old, **ttts_old;		/* travel time (in sec.) table. ttt[source depth km][distance km]  */
  float 	***tttpr, ***tttsr;		/* travel time (in sec.) table. ttt[source depth km][distance km]  */
- float 	***tttpr_old, ***tttsr_old;		/* travel time (in sec.) table. ttt[source depth km][distance km]  */
 
- int calct,nxmod,nos, model_not_valid, eikonal, jj, ix, jx;
+ int nxmod,nos,eikonal;
 
  float start_delay, sdev_start_delay,r_start_eqh,r_start_eqv;
  float xz,vpm1, vpm2, vpmp, vsm1, vsm2, vsmp, df;
@@ -214,7 +190,7 @@ struct Model old_model, new_model, best_model;
 
  float vpvsmin, vpvsmax, sdevvpvs, start_vpvs, sdev_start_vpvs;
  float zrmin, zrmax, xtest;
- long tx;
+
 
 // read observations
 //*  --- usage */
@@ -389,8 +365,6 @@ struct Model old_model, new_model, best_model;
 // tttpr ttts	
 	tttpr = make_3d_array(gh.nz, gh.nz, nxmod);
 	tttsr = make_3d_array(gh.nz, gh.nz, nxmod);
-	tttpr_old = make_3d_array(gh.nz, gh.nz, nxmod);
-	tttsr_old = make_3d_array(gh.nz, gh.nz, nxmod);
 
 // sscanf(argv[3], "%d", &deci);
 
@@ -444,8 +418,7 @@ for (i=0; i<MAX_OBS; i++) old_model.sres[i]=-99999;
  fprintf(stderr,"Start misfit calc\n");
 
 
- old_misfit = cal_fit_newx(&old_model, s, ne, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal);
-// old_misfit = cal_fit_new(&old_model, s, ne, tttp, ttts, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal);
+ old_misfit = cal_fit_newx(&old_model, s, ne, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,1);
 // for (ix=0; ix<gh.nz; ix++) for (jx=0; jx<nxmod; jx++) {tttp_old[ix][jx]=tttp[ix][jx]; ttts_old[ix][jx]=ttts[ix][jx];}
 
 // fprintf(stderr,"XXX %f %f %d\n",mfp0+mfp1+mfp2+mfp3, mfs0+mfs1+mfs2+mfs3,n_ppicks+n_spicks );
@@ -464,276 +437,6 @@ for (i=0; i<MAX_OBS; i++) old_model.sres[i]=-99999;
  fclose(fpin);
  exit(0);
 }
-
-
-
-//-----------------------------------------------------
-// CCCCCCCCCCCCCCCCCCCCCCCCC
-// HHHHHHHHHHHHHHHHHHHHHHHHH
-
-/* ============================================= */
-float cal_fit_newx (struct Model *m, struct DATA *d, int ne, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3, int flag, int eikonal) 
-{
-	int i, j, k;
-	float tp, ts, dist;
-
-        float txp[MAX_OBS],txs[MAX_OBS],sum,pp[MAX_OBS],ss[MAX_OBS];
-	float rmsp0, rmss0, rmsp1, rmss1, rmsp2, rmss2, rmsp3, rmss3; /* rms value (data fit) for this model */
-	float station_correction;
-
-	float xs, zs, zr, xr, w1, w2, tsoll;
-	int i1, i2;
-
-	rmsp0=0.0; rmss0=0.0;
-	rmsp1=0.0; rmss1=0.0;
-	rmsp2=0.0; rmss2=0.0;
-	rmsp3=0.0; rmss3=0.0;
-
-
-	if (flag==1) {*mfp0=rmsp0; *mfs0=rmss0; *mfp1=rmsp1; *mfs1=rmss1; *mfp2=rmsp2; *mfs2=rmss2; *mfp3=rmsp3; *mfs3=rmss3; return(1.0);}
-	if ( eikonal == 1 )
-	{
-		if (calct==1)			/* calculate p table */
-		{
-			setup_table_new(m, tttp, gh, 1);
-		}
-		if (calct==2)			/* calculate s table */	
-		{
-			setup_table_new(m, ttts, gh, 2);
-		}
-		if (calct==3)			/* calculate p&s table */	
-		{
-			setup_table_new(m, tttp, gh, 1);
-			setup_table_new(m, ttts, gh, 2);
-		}
-	}
-
-	for (i=0; i<m->noq; i++)
-	{
-
-// P travel times
-		fprintf(stdout, "EVENT %d  %lf %f %f %f %f\n", i, d[i].reftime, m->eq[i].x, m->eq[i].y, m->eq[i].z, m->origin[i]);
-		for (j=0; j<d[i].nobs_p; j++)
-		{
-			dist = dst(d[i].p_picks[j].x, m->eq[i].x, d[i].p_picks[j].y, m->eq[i].y);
-			if (eikonal==0) tp = sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/m->vp[find_in_cell(m,0.0)];
- 			if (eikonal==1) tp = traveltimet(tttp[d[i].p_picks[j].layer], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].p_picks[j].w1+traveltimet(tttp[d[i].p_picks[j].layer+1], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].p_picks[j].w2;
-			station_correction=m->pres[d[i].p_picks[j].st_id];
-//fprintf(stderr,"XXX P %d %f\n",d[i].p_picks[j].st_id,station_correction);
-			if (station_correction<-1000) {fprintf(stderr, "ERROR points to invalid P station correction\n"); exit(0);}
-			tp+=station_correction;	/* add residual static correction */
-//			fprintf(stderr, "EQ=%d station %03d P dist: %f tpcalc: %f tpobs: %f vstat: %f\n", i, d[i].p_picks[j].st_id, dist, tp, d[i].p_picks[j].t,vpstat);
-			txp[j]=tp;
-			pp[j]=tp;
-
-		}
-// diff
-		for (k=0; k<d[i].nobs_p; k++) txp[k]=txp[k]-d[i].p_picks[k].t;
-// sum
-		sum=0;
-		for (k=0; k<d[i].nobs_p; k++) sum=sum+txp[k];
-
-// S travel times
-		for (j=0; j<d[i].nobs_s; j++)
-		{
-			dist = dst(d[i].s_picks[j].x, m->eq[i].x, d[i].s_picks[j].y, m->eq[i].y);
-			if (eikonal==0) ts=sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/(m->vp[find_in_cell(m,0.0)]/m->vpvs[find_in_cell(m,0.0)]);
- 			if (eikonal==1) ts = traveltimet (ttts[d[i].s_picks[j].layer], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].s_picks[j].w1+traveltimet(ttts[d[i].s_picks[j].layer+1], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].s_picks[j].w2;
-
-			station_correction=m->sres[d[i].s_picks[j].st_id];
-			if (station_correction<-1000) {fprintf(stderr, "ERROR points to invalid S station correction\n"); exit(0);}
-			ts+=station_correction;	/* add residual static correction */
-//			fprintf(stderr, "EQ=%d station %03d S dist: %f tscalc: %f tsobs: %f vstat: %f\n", i, d[i].s_picks[j].st_id, dist, ts, d[i].s_picks[j].t,vsstat);
-			txs[j]=ts;
-			ss[j]=ts;
-		}
-// diff
-		for (k=0; k<d[i].nobs_s; k++) txs[k]=txs[k]-d[i].s_picks[k].t;
-		for (k=0; k<d[i].nobs_s; k++) sum=sum+txs[k];
-
-		sum=sum/(d[i].nobs_s+d[i].nobs_p);
-
-// origin time
-		m->origin[i]=-sum;
-
-
-//fprintf(stderr, "XXX picktime=%f elstat=%f vp=%f\n", d[i].p_picks[0].t,d[i].p_picks[0].z/vpstat,vpstat);
-
-// de-mean
-		for (k=0; k<d[i].nobs_p; k++) txp[k]=txp[k]-sum;
-		for (k=0; k<d[i].nobs_s; k++) txs[k]=txs[k]-sum;
-
-// output			
-//		fprintf(stdout, "EQ %d\n", i);
-		for (k=0; k<d[i].nobs_p; k++)
-		{
-			dist = dst(d[i].p_picks[k].x, m->eq[i].x, d[i].p_picks[k].y, m->eq[i].y);
-			fprintf(stdout, "%f %f %f %f %f %f P\n", txp[k],dist,m->eq[i].z,m->origin[i],d[i].p_picks[k].t,pp[k]);
-		}
-
-		for (k=0; k<d[i].nobs_s; k++)
-		{	
-			dist = dst(d[i].s_picks[k].x, m->eq[i].x, d[i].s_picks[k].y, m->eq[i].y);
-			fprintf(stdout, "%f %f %f %f %f %f S\n", txs[k],dist,m->eq[i].z,m->origin[i],d[i].s_picks[k].t,ss[k]);
-		}
-// rms
-		
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==0) rmsp0=rmsp0+txp[k]*txp[k];
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==0) rmss0=rmss0+txs[k]*txs[k];
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==1) rmsp1=rmsp1+txp[k]*txp[k];
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==1) rmss1=rmss1+txs[k]*txs[k];
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==2) rmsp2=rmsp2+txp[k]*txp[k];
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==2) rmss2=rmss2+txs[k]*txs[k];
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==3) rmsp3=rmsp3+txp[k]*txp[k];
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==3) rmss3=rmss3+txs[k]*txs[k];
-			
-	}
-	*mfp0=rmsp0; *mfs0=rmss0;
-	*mfp1=rmsp1; *mfs1=rmss1;
-	*mfp2=rmsp2; *mfs2=rmss2;
-	*mfp3=rmsp3; *mfs3=rmss3; 
-//fprintf(stderr, "XXX rmsp0 %f rmsp1 %f rmsp2 %f rmss0 %f rmss1 %f rmss2 %f\n",rmsp0, rmsp1, rmsp2, rmss0, rmss1, rmss2);
-
-	return(1.0);
-}
-
-/* -------------------------------------------------------------------- */
-
-void setup_table_new (struct Model *m, float ***ttt, struct GRDHEAD gh, int ps)
-{
-	int i, j, k;
-	float z;
-	int ix, iz;
-	float *hsbuf, *tbuf;
-	float v,xs,zs;
-	int p,nxmod;
-
-	struct Model temp_mod;
-	float xx;
-	float a,b;
-
-	float *vp, *vs;
-
-	nxmod=(int) sqrt(gh.nx*gh.nx+gh.ny*gh.ny);
-
-	if (!(hsbuf=malloc(nxmod * gh.nz * sizeof(float))))
-	{
-		fprintf(stderr, "malloc failed\n");
-		exit(0);
-	}
-	if (!(tbuf=malloc(nxmod * gh.nz * sizeof(float))))
-	{
-		fprintf(stderr, "malloc failed\n");
-		exit(0);
-	}
-
-	if (!(vp=malloc(gh.nz * sizeof(float))))
-	{
-		fprintf(stderr, "malloc failed\n");
-		exit(0);
-	}
-	if (!(vs=malloc(gh.nz * sizeof(float))))
-	{
-		fprintf(stderr, "malloc failed\n");
-		exit(0);
-	}
-
-// ---- set-up v(z) table Voronoi
-	if ( TRIA == 0 )
-	{
-		for (iz=0; iz<gh.nz; iz++)		/* depth */
-		{
-			z = gh.z0+(float)iz * gh.h;
-			k=find_in_cell(m,z);   
-			vp[iz]= m->vp[k];
-//vp[iz]=6.0;
-			vs[iz]= vp[iz]/m->vpvs[k];
-		}
-	}
-
-// ---- set-up v(z) table tria
-	if ( TRIA == 1 )
-	{
-// sort   
-		copy_model(&temp_mod,m);
-
-		j=1;	
-		while ( j != 0 )
-		{
-			j=0;
-			for (i=0; i<temp_mod.dimension-1; i++)
-			{
-				if (temp_mod.z[i]>temp_mod.z[i+1])
-				{
-					j=1;
-					xx=temp_mod.z[i+1]; temp_mod.z[i+1]=temp_mod.z[i]; temp_mod.z[i]=xx;
-					xx=temp_mod.vp[i+1]; temp_mod.vp[i+1]=temp_mod.vp[i]; temp_mod.vp[i]=xx;
-					xx=temp_mod.vpvs[i+1]; temp_mod.vpvs[i+1]=temp_mod.vpvs[i]; temp_mod.vpvs[i]=xx;
-				}
-			}
-   		}
-
-// interpol
-		for (iz=0; iz<gh.nz; iz++)		/* depth */
-		{
-			z = gh.z0+(float)iz * gh.h;
-
-			for (i=0; i<m->dimension-1; i++) if ((z>=temp_mod.z[i]) && (z<temp_mod.z[i+1])) k=i;
-//vp
-			a=(temp_mod.vp[k+1]-temp_mod.vp[k])/(temp_mod.z[k+1]-temp_mod.z[k]);
-			b=temp_mod.vp[k]-a*temp_mod.z[k];
-			vp[iz]= a*z+b;
-//vs
-			a=(temp_mod.vp[k+1]/temp_mod.vpvs[k+1]-temp_mod.vp[k]/temp_mod.vpvs[k])/(temp_mod.z[k+1]-temp_mod.z[k]);
-			b=temp_mod.vp[k]/temp_mod.vpvs[k]-a*temp_mod.z[k];
-			vs[iz]= a*z+b;
-		}
-	}
-
-// prep model
-	j=0;
-	for (ix=0; ix<nxmod; ix++)			/* epi-distance */
-	{
-		for (iz=0; iz<gh.nz; iz++)		/* depth */
-		{
-			if (ps==1) v= vp[iz];
-			if (ps==2) v= vs[iz];
-			hsbuf[j] = gh.h/v;
-			j++;
-		}
-	}
-
-
-/* ---- calculate travel times and set-up table */
-//	for (i=0; i<nxmod*gh.nz; i++) fprintf(stderr, "%d %f\n", i, hsbuf[i]);
-//fprintf(stderr, "start tt calc\n");
-	for (iz=0; iz<gh.nz; iz++)
-	{
-
-		for (i=0; i<nxmod*gh.nz; i++) tbuf[i] = 0.;
-		xs=0.0;
-		zs=(float)iz;	
-		z=zs*gh.h;
-
-//		fprintf(stderr, "working on source at depth z= %f %f with nxmod=%d nz=%d\n", z, zs, nxmod, gh.nz);	
-		time_2d(hsbuf, tbuf, nxmod, gh.nz, xs, zs, 0.001, 0);
-
-// all receiver elevations
-		for (j=0; j<gh.nz; j++)
-		{
-//fprintf(stderr, "sorting rec elev %d\n", j);	
-			for (i=0; i<nxmod; i++)
-			{
-				p = i * gh.nz+j;  
-				ttt[j][iz][i] = tbuf[p];
-			}
-		}
-	}	
-	free(hsbuf); free(tbuf);
-	free(vp); free(vs);
-	return;
-}
-
 
 /* ============================================= */
 int read_mcmcdata (FILE *f, struct DATA *d)
@@ -815,51 +518,6 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 float dst (float x1, float x2, float y1, float y2)
 {
 	return (sqrt ( ( (x1-x2)*(x1-x2) )+ ( (y1-y2)*(y1-y2) ) ) );
-}
-
-
-
-/* -------------------------------------------------------------------- */
-float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0)
-{
-	int m1, iz1, m2, iz2;
-	float x1, y1, x2, y2;
-	float v, v1, v2, v3, v4;
-
-	float x,y ;
-	int nxmod;
-
-	nxmod=(int) sqrt(nx*nx+ny*ny);
-
-
-
-	m1  = (int)(dist / h);		
-	iz1 = (int)((z-z0) / h);
-
-
-
-	x = dist;
-	y = z-z0;
-	
-	if (m1>=nxmod-1 || iz1 >= nz-1)
-		return (1e30);
-		
-	m2 = m1 + 1;
-	iz2 = iz1 + 1;
-// bilinar interpolation wikipedia https://en.wikipedia.org/wiki/Bilinear_interpolation
-	x1 = (float)m1 * h;
-	y1 = (float)iz1 * h;
-	x2 = (float)m2 * h;
-	y2 = (float)iz2 * h;
-	
-	v1 = ttt[iz1][m1];
-	v2 = ttt[iz1][m2];
-	v3 = ttt[iz2][m1];
-	v4 = ttt[iz2][m2];
-//fprintf(stdout, "%f %f %d %d %d %d %f %f %f %f %f %f %f %f\n", x,y,m1,m2,iz1,iz2, v1, v2, v3, v4, x1, x2, y1, y2);
-	v=1.0/(x2-x1)/(y2-y1)*(v1*(x2-x)*(y2-y)+v2*(x-x1)*(y2-y)+v3*(x2-x)*(y-y1)+v4*(x-x1)*(y-y1));
-
-	return (v);
 }
 
 
