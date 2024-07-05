@@ -3,7 +3,7 @@
 all:	 mcmc_eq  analyse_eq fw fw_mod
 
 clean:
-	\rm -f *.o mcmc_eq  fw  core analyse_eq
+	\rm -f *.o mcmc_eq  fw  core analyse_eq fw_mod
 
 mod_grd.o:  mod_grd.c  mc.h
 	gcc -O4 -c mod_grd.c -o mod_grd.o

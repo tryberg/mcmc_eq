@@ -1,3 +1,42 @@
+/* *******************************************
+		     mcmc_eq
+	
+	Inversion of travel times to locate earthquakes
+	and derive 1D velocity models using a statistical 
+	Markov chain Monte Carlo method
+	
+	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
+	
+	Copyright (C) 2024
+	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
+
+	Version 2.0	 1. May  2024
+	Version 3.0	 4. July 2024
+
+   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+   SPDX-License-Identifier: GPL-3.0-only 	
+
+   ******************************************* */
+   
+/*
+ *
+ * This file is part of the mcmc_eq package.
+ *
+ * mcmc_eq is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; version GPL-3.0-only.
+ *
+ * mcmc_eq is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with mcmc_eq; see the file COPYING.  If not, write to
+ * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
+ * MA 02111-1307, USA.
+ *
+ */
 //-----------------------------------------------------
 // CCCCCCCCCCCCCCCCCCCCCCCCC
 // HHHHHHHHHHHHHHHHHHHHHHHHH
