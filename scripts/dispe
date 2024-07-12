@@ -1,5 +1,13 @@
 #!/bin/csh
 
+# check for GMT4
+set R=`which psxy`
+if ( "$R" == "psxy: Command not found." ) then
+    echo $R
+    echo "install GMT4?"
+    exit 1
+endif
+
 \rm .gmt*
 gmtset MEASURE_UNIT INCH
 gmtset ANOT_FONT_SIZE 12
@@ -10,15 +18,17 @@ gmtset COLOR_NAN  200
 
 setenv LC_NUMERIC C.UTF-8
 
+set cfg = config_eqx.dat
+ls $cfg
+test -f $cfg || exit
 
-set eq = 50000
-set bi = 200000
-
-set deci = `awk '{if (NR==31) print $1}' config_eqx.dat`
-
+set eq   = `awk '{if (NR==30) print $1}' $cfg`
+set v2   = `awk '{if (NR==30) print $2}' $cfg`
+set bi   = `echo  $v2 $eq | awk '{print ($1+$2)-$2}'`
+set deci = `awk '{if (NR==31) print $1}' $cfg`
 
 touch tmp; \rm tmp; touch tmp
-foreach n ( rjx-???.out )
+foreach n ( rjx-*.out )
  echo $n
  awk '{if ($1=="mod") print $0}' $n >> tmp
 end
@@ -43,7 +53,7 @@ awk '{print $4}' tmppbibf | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dallpbibf.
 
 # misfit
 set xmin = 0
-set xmax = 350000
+set xmax = `echo $eq $v2 | awk '{print $1+$2}'`
 
 set ymin = 0.02
 set ymax = 20.0
@@ -64,7 +74,7 @@ psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models `pwd
 
 psbasemap -JX-1/3l -R0/1/$ymin/$ymax -B0/2f3nSEw -K -O -X5 >> evo.ps
 
-set max = `sort -n -k +2 malleq.dat | tail -1 | awk '{print $2}'`
+set max = `sort -n -k  2 malleq.dat | tail -1 | awk '{print $2}'`
 awk '{if ($1>0) print $2/"'$max'", $1}' malleq.dat | psxy -JX -R  -K -O -Gblack -L >> evo.ps
 awk '{if ($1>0) print $2/"'$max'", $1}' mallpbi.dat | psxy -JX -R  -K -O -Gblue -L >> evo.ps
 awk '{if ($1>0) print $2/"'$max'", $1}' mallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo.ps
@@ -85,7 +95,7 @@ echo $bi $ymin $bi $ymax | awk '{print $1, $2; print $3, $4; print ">"}' | psxy 
 psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models":/10f5:"Dim":nSW -K -O >> evo.ps
 
 psbasemap -JX-1/2 -R0/1/$ymin/$ymax -B0/10f5nSEw -K -O -X5 >> evo.ps
-set max = `sort -n -k +2 dalleq.dat | tail -1 | awk '{print $2}'`
+set max = `sort -n -k  2 dalleq.dat | tail -1 | awk '{print $2}'`
 awk '{print $2/"'$max'", $1}' dalleq.dat | psxy -JX -R  -K -O -Gblack -L >> evo.ps
 awk '{print $2/"'$max'", $1}' dallpbi.dat | psxy -JX -R  -K -O -Gblue -L >> evo.ps
 awk '{print $2/"'$max'", $1}' dallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo.ps
@@ -94,5 +104,7 @@ awk '{print $2/"'$max'", $1}' dallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo
 echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> evo.ps
 \rm dall*dat mall*dat tmp*
 
-
+ps2raster -Tg evo.ps -A
+ls $PWD/evo.ps
+ls $PWD/evo.png
 
