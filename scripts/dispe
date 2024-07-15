@@ -44,6 +44,7 @@ awk '{print $5}' tmp | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mall.dat
 awk '{print $5}' tmpeq | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! malleq.dat
 awk '{print $5}' tmppbi | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mallpbi.dat
 awk '{print $5}' tmppbibf | pshistogram -R0/20/0/1 -F -W0.001 -IO -Z0 >! mallpbibf.dat
+awk '{print $5}' tmppbi | pshistogram -R0/120/0/110 -W0.001 -Z1 -Q -G0 -K -O -V -Io >! mallpbic.dat
 
 # dim
 awk '{print $4}' tmp | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dall.dat
@@ -53,7 +54,7 @@ awk '{print $4}' tmppbibf | pshistogram -R0/500/0/1 -F -W1 -IO -Z0 >! dallpbibf.
 
 # misfit
 set xmin = 0
-set xmax = `echo $eq $v2 | awk '{print $1+$2}'`
+set xmax = `echo $eq $v2 | awk '{print ($1+$2)*1.1}'`
 
 set ymin = 0.02
 set ymax = 20.0
@@ -78,6 +79,7 @@ set max = `sort -n -k  2 malleq.dat | tail -1 | awk '{print $2}'`
 awk '{if ($1>0) print $2/"'$max'", $1}' malleq.dat | psxy -JX -R  -K -O -Gblack -L >> evo.ps
 awk '{if ($1>0) print $2/"'$max'", $1}' mallpbi.dat | psxy -JX -R  -K -O -Gblue -L >> evo.ps
 awk '{if ($1>0) print $2/"'$max'", $1}' mallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo.ps
+awk '{if ($1>0) print $2/100.0, $1}' mallpbic.dat | psxy -JX -R  -K -O -W1/green >> evo.ps
 
 
 # dim

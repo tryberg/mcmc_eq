@@ -10,6 +10,8 @@ gmtset COLOR_NAN  0/0/100
 setenv LC_NUMERIC C.UTF-8
 
 set cfg = config_eqx.dat
+ls $cfg
+test -f $cfg || exit
 
 set f = 1
 
@@ -42,7 +44,7 @@ set vmaxvs = 6.93
 
 
 touch tmp; \rm tmp; touch tmp
-foreach n ( rjx-???.out )
+foreach n ( rjx-*.out )
  echo $n
  awk '{if (($3>1*"'$bi'") && ($3<300000)) print $0}' $n | awk '{if ($2!="BF") print $0}' | awk '{if ($1!="cnt") print $0}' >> tmp
 end
@@ -66,15 +68,15 @@ set allr = `egrep mod tmpx | wc | awk '{print $1}'`
 set dv = 0.01
 set dvpvs = 0.01
 
-./analyse_eq configa.dat tmpx $dv $dvpvs  >! resmcnx.dat
+analyse_eq configa.dat tmpx $dv $dvpvs  >! resmcnx.dat
 
 # ------- PPPPPPP
 awk '{if ($1=="BINP") print $2, $3, $4}' resmcnx.dat | awk '{if ($3>0) print $0}' | xyz2grd -I$dv/$d -R$vmin/$vmax/$zmin/$zmax -Ghistp.grd -V
-set hmax = `grdinfo histp.grd | egrep z_max | awk '{print $5}'`
+#set hmax = `grdinfo histp.grd | egrep z_max | awk '{print $5}'`
 
-makecpt -Crainbow -Z -T0/$hmax/1 -D >! colv.cpt
-makecpt -Cseis -Z -T0/$hmax/1 -D -I >! colv.cpt
-
+#makecpt -Crainbow -Z -T0/$hmax/1 -D >! colv.cpt
+#makecpt -Cseis -Z -T0/$hmax/1 -D -I >! colv.cpt
+grd2cpt -Cseis -Z -D -I histp.grd >! colv.cpt
 
 # model
 psbasemap -JX1.8/-6 -R$vmin/$vmax/$zmin/$zmax -B1f0.5:"Vp":/10f5g10000SeWN -K -Y1.6 -X0.4 >! xselect.ps
@@ -102,10 +104,11 @@ awk '{if ($1=="STAN") print $13, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} pr
 
 # ------- SSSSSSS
 awk '{if ($1=="BINV") print $2, $3, $4}' resmcnx.dat | awk '{if ($3>0) print $0}' | xyz2grd -I$dvpvs/$d -R$vmins/$vmaxs/$zmin/$zmax -Ghists.grd -V
-set hmax = `grdinfo hists.grd | egrep z_max | awk '{print $5}'`
+#set hmax = `grdinfo hists.grd | egrep z_max | awk '{print $5}'`
 
-makecpt -Crainbow -Z -T0/$hmax/1 -D >! colv.cpt
-makecpt -Cseis -Z -T0/$hmax/1 -D -I >! colv.cpt
+#makecpt -Crainbow -Z -T0/$hmax/1 -D >! colv.cpt
+#makecpt -Cseis -Z -T0/$hmax/1 -D -I >! colv.cpt
+grd2cpt -Cseis -Z -D -I histp.grd >! colv.cpt
 
 psbasemap -JX1.8/-6 -R$vmins/$vmaxs/$zmin/$zmax -B1f0.5:"Vp/Vs":/10f5g1000SewN -K -O -X1.2 >> xselect.ps
 grdimage hists.grd -JX -R -Ccolv.cpt -K -O >> xselect.ps
@@ -137,3 +140,5 @@ awk '{if ($1=="STAN") {f=$7/$9; x1=$8/$7; x2=$10/$9; df=f*sqrt(x1*x1+x2*x2); pri
 echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> xselect.ps
 
 \rm configa.dat
+ps2raster -Tg xselect.ps -A
+ls $PWD/xselect.p*
