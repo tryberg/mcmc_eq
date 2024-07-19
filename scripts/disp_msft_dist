@@ -9,11 +9,17 @@ gmtset LABEL_FONT_SIZE 10
 gmtset COLOR_NAN  200/200/200
 setenv LC_NUMERIC C.UTF-8
 
-
+set exe = fw
+which $exe
+test -z "`whereis -q -b $exe`" && echo "can't find $exe" && exit
 
 set cfg = config_eqx.dat
+ls $cfg
+test -f $cfg || exit
 
 set res = resmcnx.dat
+ls $res
+test -f $res || exit
 
 set z0 = `egrep Z0 $cfg | awk '{print $1}'`
 set nz = `egrep NZ $cfg | awk '{print $1}'`
@@ -21,7 +27,13 @@ set dx = `cat $cfg | awk '{if (NR==1) print $1}'`
 
 set z1 = `echo $z0 $nz $dx | awk '{print $1+($2-2)*$3}'`
 
+echo reading $#argv inputs...
+test $#argv -eq 1 || echo "need mcmcPhaseFile (picks) as input arg"
+test $#argv -eq 1 || exit
 
+set picks = $1
+ls $picks
+test -f $picks || exit
 
 egrep STAN $res >! res.dat
 egrep EQ   $res | awk '{z=$5; if (z<1.0*"'$z0'") z="'$z0'"; if (z>1.0*"'$z1'") z="'$z1'";print $1, $2, $3, $4, z, $6, $7, $8, $9, $10, $11}' >> res.dat
@@ -31,10 +43,10 @@ egrep NOISE $res | awk '{print $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $1
 
 
 # prepare pick file with that quake
-cat picks >! test
+cat $picks >! test
 
 
-./fw $cfg res.dat test > ! predictions
+$exe $cfg res.dat test > ! predictions
 
 awk '{print $0}' test > ! t0
 

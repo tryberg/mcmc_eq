@@ -1,0 +1,21 @@
+#!/bin/tcsh
+
+# Example script from Trond to run on GFZ cluster
+
+set CPUs = $1
+
+# prepare SLURM ARRAY script
+echo 0 | awk '{printf"#\!/bin/tcsh\n"}' >! work.csh
+echo $CPUs | awk '{printf"#SBATCH --array=0-%d\n",$1-1}' >> work.csh
+echo "#SBATCH --output=QA.lst" >> work.csh
+echo "#SBATCH --time=002-00:00:00" >> work.csh
+pwd | sed 's/\// /g' | awk '{printf"#SBATCH --job-name=%s\n",$NF}' >> work.csh
+echo 0 | awk '{printf"srun ./run_eqx.job $SLURM_ARRAY_TASK_ID &\n"}' >> work.csh
+echo "wait" >> work.csh
+
+# assume serial call in run.job
+
+
+sbatch work.csh
+
+#\rm work.csh

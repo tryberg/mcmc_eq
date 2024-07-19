@@ -1,12 +1,8 @@
 #!/bin/csh
 
 # check for GMT4
-set R=`which psxy`
-if ( "$R" == "psxy: Command not found." ) then
-    echo $R
-    echo "install GMT4?"
-    exit 1
-endif
+whereis -b pshistogram
+test -z "`whereis -q -b pshistogram`" && echo "install GMT?" && exit
 
 \rm .gmt*
 gmtset MEASURE_UNIT INCH
@@ -110,3 +106,4 @@ ps2raster -Tg evo.ps -A
 ls $PWD/evo.ps
 ls $PWD/evo.png
 
+ test "`uname`" == "Darwin" && open evo.png

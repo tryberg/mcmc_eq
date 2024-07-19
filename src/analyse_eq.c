@@ -231,6 +231,33 @@ void gsearch(float data[Max_data], long nsamp, float *mean, float *sdev, float d
 //	fprintf(stderr,"m %f s %f\n",m,s);
 }
 
+void map_search(float data[Max_data], long nsamp, float *map)
+{
+	long	i,j,nob,maxb;
+	float	min, max, bin_width, m;
+	int bdata[MB];
+	
+	
+// get min/max
+	min=data[0];
+	max=data[0];
+	for (i=0; i<nsamp; i++) if (data[i]>max) max=data[i];
+	for (i=0; i<nsamp; i++) if (data[i]<min) min=data[i];
+	bin_width=(max-min)/sqrt(nsamp);
+	
+	nob=(int) sqrt(nsamp) +1;
+ 	if (nob>MB) {fprintf(stderr,"Number of required bins too large, modify MB and compile\n"); exit(0);}
+	for (i=0; i<nob; i++) bdata[i]=0;
+ 	for (i=0; i<nsamp; i++) bdata[(int)((data[i]-min)/bin_width)]++;
+
+	maxb=bdata[i];
+	for (i=0; i<nob; i++) if (bdata[i]>maxb) {maxb=bdata[i];j=i;}
+	m=j*bin_width+min;
+
+	*map=m;
+//	fprintf(stderr,"m %f s %f\n",m,s);
+}
+
 
 void stats(float data[Max_data],float data2[Max_data],int ndata,int *ndata2,float vmin,float vmax,float dv,float *mean,float *sdev,float *mean2,float *sdev2) 
 { 
@@ -323,7 +350,7 @@ int main(int argc, char *argv[])
  float data[Max_data], data2[Max_data];
 
  double eqx[MAX_NOQ], eqy[MAX_NOQ], eqz[MAX_NOQ], seqx[MAX_NOQ], seqy[MAX_NOQ], seqz[MAX_NOQ];
- double eqz2[MAX_NOQ],seqz2[MAX_NOQ],misfit1[MAX_NOQ], misfit2[MAX_NOQ];
+ double eqz2[MAX_NOQ],seqz2[MAX_NOQ],misfit1[MAX_NOQ], misfit2[MAX_NOQ],eqx3[MAX_NOQ], eqy3[MAX_NOQ],eqz3[MAX_NOQ];
  double eqt[MAX_NOQ], eqdt[MAX_NOQ], seqdt[MAX_NOQ];
  double resdtp[MAX_OBS], sresdtp[MAX_OBS];
  double resdts[MAX_OBS], sresdts[MAX_OBS];
@@ -331,7 +358,7 @@ int main(int argc, char *argv[])
  double snp0, snp1, snp2, snp3, sns0, sns1, sns2, sns3;
 
  float **vs, **vp;
- float **eq_depth;
+ float **eq_depth, **eq_x, **eq_y;
 
 
  float vpvsmin, vpvsmax, dvpvs,z0;
@@ -438,6 +465,8 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
  if (!(vp = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(vs = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(eq_depth = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+ if (!(eq_x = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+ if (!(eq_y = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
 
 // ini model
 
@@ -478,7 +507,9 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       if (!(vp[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(vs[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(eq_depth[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
-      
+      if (!(eq_x[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+      if (!(eq_y[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+
       
       c = strtok (buf, " ");	/* read "mod" */
       c2 = strtok (NULL, " ");	/* read type */
@@ -590,7 +621,10 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       zz = atof(strtok (NULL, " ")); eqz[eqi]=eqz[eqi]+zz; 
       tt = atof(strtok (NULL, " ")); eqt[eqi]=tt;
       dt = atof(strtok (NULL, " ")); eqdt[eqi]=eqdt[eqi]+dt;       
-      eq_depth[mcount-1][eqi]=zz;           
+      eq_x[mcount-1][eqi]=xx;  
+      eq_y[mcount-1][eqi]=yy;  
+      eq_depth[mcount-1][eqi]=zz;  
+
      }
 // RES
      if (strncmp (buf, "RES", 3)==0)
@@ -707,10 +741,10 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
    sns0=sqrt(sns0/mcount); sns1=sqrt(sns1/mcount); sns2=sqrt(sns2/mcount); sns3=sqrt(sns3/mcount);
 
 // get mean/sdev for EQ z by cdf
-   fprintf(stderr,"analyse EQz\n");
+   fprintf(stderr,"analyse quake depth\n");
    for (i=0; i<noq; i++)
    {
-      fprintf(stderr,"\rdepth analysis of EQ %5d of %5d",i,noq-1);
+      fprintf(stderr,"\rEQz depth analysis of EQ %5d of %5d",i,noq-1);
 
       for (k=0; k<mcount; k++) data[k]=eq_depth[k][i];
       mm=eqz[i]; ss=seqz[i];
@@ -720,7 +754,26 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       misfit1[i]=mfit1;
       misfit2[i]=mfit2;
    }
+   fprintf(stderr,"\n");
 
+   
+// get MAP for EQ z auto binning Square-root choice
+   for (i=0; i<noq; i++)
+   {
+      fprintf(stderr,"\rMAP depth analysis of EQ %5d of %5d",i,noq-1);
+
+      for (k=0; k<mcount; k++) data[k]=eq_x[k][i];
+      map_search(data,mcount, &mm);
+      eqx3[i]=mm;
+      for (k=0; k<mcount; k++) data[k]=eq_y[k][i];
+      map_search(data,mcount, &mm);
+      eqy3[i]=mm;     
+      for (k=0; k<mcount; k++) data[k]=eq_depth[k][i];
+      map_search(data,mcount, &mm);
+      eqz3[i]=mm;     
+   }
+
+   
 // output
     fprintf(stderr, "\nOutput results for %d models\n",mcount);
 
@@ -747,6 +800,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 
     for (i=0; i<noq; i++) fprintf(stdout, "EZ %4d %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %14.3lf %7.3lf %7.3lf %9.5f\n", i, eqx[i], eqy[i], eqz2[i], seqx[i], seqy[i], seqz2[i],eqt[i],eqdt[i],seqdt[i],misfit2[i]);
     
+    for (i=0; i<noq; i++) fprintf(stdout, "EM %4d %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %14.3lf %7.3lf %7.3lf %9.5f\n", i, eqx3[i], eqy3[i], eqz3[i], seqx[i], seqy[i], 0.0,eqt[i],eqdt[i],seqdt[i],0.0);
     
     for (i=0; i<nos; i++) fprintf(stdout, "RES %4d %7.3f %7.3f %7.3f %7.3f\n", i,resdtp[i],resdts[i],sresdtp[i],sresdts[i]);
     fprintf(stdout, "NOISE %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f\n", np0, np1, np2, np3, ns0, ns1, ns2, ns3, snp0, snp1, snp2, snp3, sns0, sns1, sns2, sns3);
