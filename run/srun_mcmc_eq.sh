@@ -21,7 +21,7 @@ id=`echo $SLURM_ARRAY_TASK_ID | awk '{printf "%03d\n",$0}'`
 
 cfg=config_eqx.dat	# configuration file
 exe=mcmc_eq 		# executable
-mdf=dataFilt.mcmc 	# pickfile
+mdf=picks.mcmc	 	# pickfile
 
 which $exe
 ls $cfg $mdf ./$exe

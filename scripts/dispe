@@ -2,9 +2,9 @@
 
 # check for GMT4
 whereis -b pshistogram
-test -z "`whereis -q -b pshistogram`" && echo "install GMT?" && exit
+test -z "`whereis -q -b pshistogram`" && echo "install GMT4?" && exit
 
-\rm .gmt*
+\rm -f .gmt*
 gmtset MEASURE_UNIT INCH
 gmtset ANOT_FONT_SIZE 12
 gmtset HEADER_FONT_SIZE 12
@@ -102,8 +102,8 @@ awk '{print $2/"'$max'", $1}' dallpbibf.dat | psxy -JX -R  -K -O -Gred -L >> evo
 echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> evo.ps
 \rm dall*dat mall*dat tmp*
 
-ps2raster -Tg evo.ps -A
+ps2raster -Tg evo.ps -Au
 ls $PWD/evo.ps
 ls $PWD/evo.png
 
- test "`uname`" == "Darwin" && open evo.png
+test "`uname`" == "Darwin" && open evo.png

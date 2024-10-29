@@ -11,6 +11,8 @@ gmtset COLOR_NAN  200/200/200
 setenv LC_NUMERIC C.UTF-8
 
 set f = resmcnx.dat
+ls $f
+test -f $f || exit
 
 set window = 5
 
@@ -19,12 +21,12 @@ ls $cfg
 test -f $cfg || exit
 set z0 = `awk '{if (NR==7) print $1}' $cfg`
 
+set burnin = 200000
+echo "using $burnin for burnin"
 
 foreach eqn ( 200 )
 
 echo "plotting quake: $eqn"
-
-set burnin = 225000
 
 set output = x.ps
 

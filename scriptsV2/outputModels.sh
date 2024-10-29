@@ -51,3 +51,7 @@ awk '{if ($1=="STAN") print $11/$12, $2}' resmcnx.dat |\
  awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > maxProb_s.mod
 
 ls *s.mod
+
+###### write out reloc file for other plots
+egrep EZ resmcnx.dat | awk '{printf "%8.3f %8.3f %8.3f %015.3f %7.3f %f %f %f\n",$3,$4,$5,$9,$10,$6,$7,$8}' > eqs.reloc.xyz
+ls eqs.reloc.xyz

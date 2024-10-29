@@ -67,7 +67,7 @@ awk '{print $3, $4}' resmcna.tmp | psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $3, $4, $6/2.0, $7/2.0}' resmcna.tmp | psxy -JX -R -Sc0.001 -Exy0.01 -K -O >> eq.ps
 
 if (-f quakes.dat) then # known locations file for comparison (ID,X,Y,Z,OT,0)
-	awk '{print $2, $3}' quakes.dat | psxy -JX -R -Sc0.01 -Gblack -K -O >> eq.ps
+	awk '{print $2, $3}' quakes.dat | psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 endif
 
 #z-y
@@ -81,7 +81,7 @@ test "$na" -gt 0 && echo WARNING: $na events above model plotted in green
 awk '{if ($5<'$zmin') print $5, $4}' resmcna.tmp | psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
 if (-f quakes.dat) then # known locations file for comparison (ID,X,Y,Z,OT,0)
-	awk '{print $4, $3}' quakes.dat | psxy -JX -R -Sc0.01 -Gblack -K -O >> eq.ps
+	awk '{print $4, $3}' quakes.dat | psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 endif
 
 
@@ -94,7 +94,7 @@ awk '{print $3, $5, $6/2.0, $8/2.0}' resmcna.tmp | psxy -JX -R -Sc0.001 -Exy0.01
 awk '{if ($5<'$zmin') print $3, $5}' resmcna.tmp | psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
 if (-f quakes.dat) then # known locations file for comparison (ID,X,Y,Z,OT,0)
-	awk '{print $2, $4}' quakes.dat | psxy -JX -R -Sc0.01 -Gblack -K -O >> eq.ps
+	awk '{print $2, $4}' quakes.dat | psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 endif
 
 echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> eq.ps
