@@ -2,7 +2,7 @@
 
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 
-# Check for GMT4
+echo "Checking for GMT4:"
 whereis -b pshistogram
 if [[ -z "$(whereis -q -b pshistogram)" ]]; then
     echo "install GMT4?"

@@ -2,6 +2,47 @@
 
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 
+cfg="config_eqx.dat"
+if [ ! -f "$cfg" ]
+then
+ls $cfg
+exit
+fi
+
+z0=$(awk 'NR==7 {print $1}' "$cfg")
+eq=$(awk '{if (NR==30) print $1}' "$cfg") # needs to be past burn-in phase!
+vv=$(awk '{if (NR==30) print $2}' "$cfg")
+tot=$(echo "$vv $eq" | awk '{print $1+$2}')
+
+str="<start model number post burn-in, b/t $eq and $tot> [<event number[s] to plot (default#: 200)>] [<window half length (5 km)>]"
+me=`basename "$0"`
+
+if [ "$#" -lt 1 ]
+then
+echo "${me}: $str"
+echo "optionally plot multiple event numbers with quotes for 2nd input"
+exit
+else
+echo post burn-in input number: $1
+echo event ID[s]: $2
+fi
+
+if (( $1 > $eq && $1 < $tot )); then
+    bi=$1
+else
+    echo "error: bad 1st input value"
+    echo "$str"
+    exit
+fi
+
+[ "$#" -gt 1 ] && eqn0=$2
+[ "$#" -gt 1 ] || eqn0=200
+echo "using quake number $eqn0"
+
+f="resmcnx.dat"
+ls "$f" "$cfg"
+[ -f "$f" ] || exit
+
 rm .gmt*
 gmtset MEASURE_UNIT INCH
 gmtset ANOT_FONT_SIZE 10
@@ -12,21 +53,15 @@ gmtset COLOR_NAN  200/200/200
 
 export LC_NUMERIC=C.UTF-8
 
-f="resmcnx.dat"
-ls "$f"
-[ -f "$f" ] || exit
+if [ "$#" -lt 3 ]
+then
+window=5 # radius around mean
+else
+window=$3
+fi
+echo "window length is 2*${window} km"
 
-window=5
-
-cfg="config_eqx.dat"
-ls "$cfg"
-[ -f "$cfg" ] || exit
-z0=$(awk 'NR==7 {print $1}' "$cfg")
-
-burnin=200000
-echo "using $burnin for burnin"
-
-for eqn in 200; do
+for eqn in $eqn0; do
 
     echo "plotting quake: $eqn"
 
@@ -41,7 +76,7 @@ for eqn in 200; do
     dy=0.25
     dz=0.25
 
-    awk '{if (($3>(1*"'$burnin'")) && ($4=="'"$eqn"'")) print $0}' tmpx | grep EQ > t77
+    awk '{if (($3>(1*"'$bi'")) && ($4=="'"$eqn"'")) print $0}' tmpx | grep EQ > t77
 
     # x-y
     psbasemap -JX5 -R$xy -B2f1:"X [km]":/2f1:"Y [km]":swEN -K -P -Y5.75 > "$output"
