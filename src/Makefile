@@ -1,5 +1,5 @@
-CC      = gcc
 CC      = /Library/Developer/CommandLineTools/usr/bin/gcc
+CC      = gcc
 
 all:	 mcmc_eq  analyse_eq fw fw_mod
 
