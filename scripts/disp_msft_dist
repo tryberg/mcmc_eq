@@ -54,7 +54,7 @@ awk '{print $0}' test > ! t0
 paste predictions t0 >! residuals.dat
 
 awk '{if ($1!="EVENT") print $1}' residuals.dat >! t
-~/bin/rms.linux t
+#~/bin/rms.linux t
 
 
 
@@ -81,3 +81,8 @@ awk '{if (($1!="EVENT") && ($7=="S") && ($15!=10)) print $1}' residuals.dat | ps
 echo 0 0 | psxy -JX -R -B0 -Sc0.001 -O >> msftp.ps
 
 \rm t residuals.dat predictions res.dat
+
+ps2raster -Tg msftp.ps -Au
+ls $PWD/msftp.p*
+
+test "`uname`" == "Darwin" && open msftp.png

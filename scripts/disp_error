@@ -14,18 +14,17 @@ egrep EZ resmcnx.dat >! t1
 psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"Quake_x dx [km]":/0SWen -K -P -Y8 -X0.7 >! error.ps
 paste t1 quakes.dat | awk '{print $3-$14}' | pshistogram -JX -R -W0.1 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 quakes.dat | awk '{print $3-$14}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -2 90  10 0 0 0 "m/s="$mean"+-"$sigma" km" | pstext -JX -R -K -O -N >> error.ps
-
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -2 90  10 0 0 0 "m/s="$m"+-"$s" km" | pstext -JX -R -K -O -N >> error.ps
 
 # EQ y
 psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"Quake_y dy [km]":/0SWen -K -O -X2.35 >> error.ps
 paste t1 quakes.dat | awk '{print $4-$15}' | pshistogram -JX -R -W0.1 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 quakes.dat | awk '{print $4-$15}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -2 90  10 0 0 0 "m/s="$mean"+-"$sigma" km" | pstext -JX -R -K -O -N >> error.ps
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -2 90  10 0 0 0 "m/s="$m"+-"$s" km" | pstext -JX -R -K -O -N >> error.ps
 
 echo 0 0 | psxy -JX -R -B0:"`pwd`":/0N -Sc0.001 -O -K >> error.ps
 
@@ -34,17 +33,17 @@ echo 0 0 | psxy -JX -R -B0:"`pwd`":/0N -Sc0.001 -O -K >> error.ps
 psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"shallower    dz [km]     deeper":/0SWen -K -O -X2.35 >> error.ps
 paste t1 quakes.dat | awk '{print $5-$16}' | pshistogram -JX -R -W0.1 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 quakes.dat | awk '{print $5-$16}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -2 90  10 0 0 0 "m/s="$mean"+-"$sigma" km" | pstext -JX -R -K -O -N >> error.ps
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -2 90  10 0 0 0 "m/s="$m"+-"$s" km" | pstext -JX -R -K -O -N >> error.ps
 
 #origin time
 psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"Origin time dt [s]":/0SWen -K -O -Y-3.0 -X-4.7 >> error.ps
 paste t1 quakes.dat | awk '{print $9+$10-$17}' | pshistogram -JX -R -W0.025 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 quakes.dat | awk '{print $9+$10-$17}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -2 90  10 0 0 0 "m/s="$mean"+-"$sigma" s" | pstext -JX -R -K -O -N >> error.ps
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -2 90  10 0 0 0 "m/s="$m"+-"$s" s" | pstext -JX -R -K -O -N >> error.ps
 
 # datat noise
 psbasemap -JX2/2 -R0.0/0.35/0/1500 -B0.1f0.05:"Data noise [s]":/0SWen -K -O -X2.35 >> error.ps
@@ -77,18 +76,18 @@ egrep RES resmcnx.dat >! t1
 psbasemap -JX2/2 -R-0.5/0.5/0/50 -B0.2f0.1g100:"Station correction P dt [s]":/0SWen -K -O -Y-3.0 -X-2.35 >> error.ps
 paste t1 stations.dat | awk '{print $3-$11}' | pshistogram -JX -R -W0.01 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 stations.dat | awk '{print $3-$11}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -0.5 45  10 0 0 0 "m/s="$mean"+-"$sigma" s" | pstext -JX -R -K -O -N >> error.ps
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -0.5 45  10 0 0 0 "m/s="$m"+-"$s" s" | pstext -JX -R -K -O -N >> error.ps
 
 
 # station correction S
 psbasemap -JX2/2 -R-0.5/0.5/0/50 -B0.2f0.1g100:"Station correction S dt [s]":/0SWen -K -O -X2.35 >> error.ps
 paste t1 stations.dat | awk '{print $4-$12}' | pshistogram -JX -R -W0.01 -Z0 -G0 -K -O -V -F >> error.ps
 paste t1 stations.dat | awk '{print $4-$12}' >! t2
-set mean = `~/bin/rms t2 | awk '{printf"%6.2f\n", $1}'`
-set sigma = `~/bin/rms t2 | awk '{printf"%6.2f\n", $2}'`
-echo -0.5 45  10 0 0 0 "m/s="$mean"+-"$sigma" s" | pstext -JX -R -K -O -N >> error.ps
+set m = `awk '{i++; s+=$1;}END{printf"%5.2f\n", s/i;}' t2`
+set s = `awk '{i++; s+=(($1-1.0*"'$m'")*($1-1.0*"'$m'"));}END{printf"%5.2f\n",sqrt(s/(i-1));}' t2`
+echo -0.5 45  10 0 0 0 "m/s="$m"+-"$s" s" | pstext -JX -R -K -O -N >> error.ps
 
 
 # Vp
