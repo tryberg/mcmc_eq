@@ -1,5 +1,5 @@
 # mcmc_eq
-McMC inversion of quake locations, station corrections and velocity structure
+Bayesian Markov chain Monte Carlo simultaneous inversion for local earthquake hypocentres, 1-D velocity structure, and station corrections
 
 (https://doi.org/10.5281/zenodo.12179143)
 
