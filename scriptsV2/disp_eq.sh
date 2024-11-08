@@ -55,7 +55,7 @@ awk '{if ($1!="#" && $2!="NA") print $1, $2, $4, $5, $6}' "$picks" | sort | uniq
 egrep EZ "$res" > resmcna.tmp
 
 # x-y
-gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -B10f5NWse -K -X0.7 -Y2.9 > eq.ps
+gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -Baf -BNWse -K -X0.7 -Y2.9 > eq.ps
 
 paste t1 rec.dat > recdata
 stac=staCors_mcmc.dat
@@ -75,7 +75,7 @@ if [[ -f $quakes ]]; then
 fi
 
 # z-y
-gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -B10f5g1000/10f5:"$PWD":sENw -K -O -X"$xs" >> eq.ps
+gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -BsENw -Bxafg1000 -Byaf+l"$PWD" -K -O -X"$xs" >> eq.ps
 awk '{print $8, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> eq.ps
 awk '{print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $5, $4, $8/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps
@@ -93,7 +93,7 @@ if [ -f $quakes ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
 fi
 
 # x-z
-gmt psbasemap -JX"$xs/-$zs" -R"$xmin/$xmax/$zmin/$zmax" -B10f5/10f5g1000Wsne -K -O -X-"$xs" -Y-"$zs" >> eq.ps
+gmt psbasemap -JX"$xs/-$zs" -R"$xmin/$xmax/$zmin/$zmax" -BWsne -Byafg1000 -Bxaf -K -O -X-"$xs" -Y-"$zs" >> eq.ps
 awk '{print $6, $8}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> eq.ps
 awk '{print $3, $5}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $3, $5, $6/2.0, $8/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps

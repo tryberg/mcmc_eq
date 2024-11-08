@@ -59,7 +59,7 @@ awk '{print $4}' tmppbibf | gmt pshistogram -R0/500/0/1 -F -W1 -IO -Z0 > dallpbi
 xmin=0
 xmax=$(echo "$eq $v2" | awk '{print ($1+$2)*1.1}')
 
-ymin=0.02
+ymin=0.01
 ymax=20.0
 lymin=$(echo "$ymin" | awk '{print log($1)}')
 lymax=$(echo "$ymax" | awk '{print log($1)}')

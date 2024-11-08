@@ -16,9 +16,11 @@ gmt set HEADER_OFFSET 0.5c
 gmt set LABEL_FONT_SIZE 10
 gmt set COLOR_NAN 200/200/200
 
-output="loc_evo"
-
-bi=150000
+bi=200000
+echo "using default burnin: $bi"
+eq=200
+echo "using default quake number: $eq"
+output="loc_evo${eq}"
 
 p="."
 
@@ -32,11 +34,10 @@ z0=$(awk '{if (NR==7) print $1}' "$p/$cfg")
 x1=$(echo "$x0 $nx $d" | awk '{print $1+($2-1)*$3}')
 y1=$(echo "$y0 $ny $d" | awk '{print $1+($2-1)*$3}')
 z1=$(echo "$z0 $nz $d" | awk '{print $1+($2-1)*$3}')
-eq=4
 
 echo "$x0" "$x1" "$y0" "$y1" "$z0" "$z1"
 
-gmt psbasemap -JX6 -R"$x0/$x1/$y0/$y1" -B20f10:"X [km]":/20f10:"Y [km]":NWes -K -P -Y4.5 > "${output}.ps"
+gmt psbasemap -JX6 -R"$x0/$x1/$y0/$y1" -BNWes -Bxaf+l"X [km]" -Byaf+l"Y [km]" -K -P -Y4.5 > "${output}.ps"
 
 for n in {1..6}; do
     cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W  -K -O -m">" >> "${output}.ps"
@@ -47,7 +48,7 @@ done
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m">" >> "${output}.ps"
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt psxy -JX -R -Sc0.03 -Gblue -K -O -m">" >> "${output}.ps"
 
-gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -B20f10:"X [km]":/20f10:"Z [km]":SWen -K -P -Y-3 -O >> "${output}.ps"
+gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -BSWen -Bxaf+l"X [km]" -Byaf+l"Z [km]" -K -P -Y-3 -O >> "${output}.ps"
 
 for n in {1..6}; do
     cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W -K -O -m">" >> "${output}.ps"
