@@ -901,16 +901,20 @@ fprintf(stderr,"reading noise \n");
     index=rand_eq_int(new_model.nos);
     dx=rand_gauss_bounded(new_model.pres[index], sdevresidual, residual_min,residual_max);
     dy=rand_gauss_bounded(new_model.sres[index], sdevresidual, residual_min,residual_max);
-    
+
+// for P or S station corrections only
+    if (scor_flag==-1) dy=0.0; // P statcor only
+    if (scor_flag==-2) dx=0.0; // S statcor only
+	
 // no reference station -> zero mean <delay>==0 for P & S
-    if (scor_flag==0)
+    if ((scor_flag==0) || (scor_flag==-1) || (scor_flag==-2))
     {
 	new_model.pres[index]=new_model.pres[index]+dx;
 	new_model.sres[index]=new_model.sres[index]+dy;
 	for (jj=0; jj<new_model.nos; jj++) if (jj!=index) new_model.pres[jj]=new_model.pres[jj]-dx/(new_model.nos-1);
     	for (jj=0; jj<new_model.nos; jj++) if (jj!=index) new_model.sres[jj]=new_model.sres[jj]-dy/(new_model.nos-1);
     }
-    
+	
 // with reference station
     if (scor_flag!=0)
     {

@@ -68,7 +68,7 @@ gmt psbasemap -JX5/3 -R$xmin/$xmax/$lymin/$lymax -B0n -K -P -Y2.0 -U"`basename $
 
 dx=0.03
 
-awk '{print $3,log($5)}' tmp | awk '{print int($1/"'$deci'"), int($2/"'$dx'")}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$deci'", yold*"'$dx'", s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | gmt xyz2grd -Gtmp.grd -R$xmin/$xmax/$lymin/$lymax -I$deci/$dx -V
+awk '{if ($5!="nan") print $3,log($5),1}' tmp | gmt blockmean -R$xmin/$xmax/$lymin/$lymax -I$deci/$dx -Sw | awk '{print $1, $2, $3-1}' | gmt xyz2grd -Gtmp.grd -R$xmin/$xmax/$lymin/$lymax -I$deci/$dx -V
 
 zmax=$(gmt grdinfo tmp.grd | grep v_max | awk '{print $5}')
 gmt makecpt -Chot -Z -T0/$zmax/1 -D > tmp.cpt
@@ -90,7 +90,7 @@ ymin=0
 ymax=30
 gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B0n -K -P -X-5 -Y4 -O >> evo.ps
 
-awk '{print $3,$4}' tmp | awk '{print int($1/"'$deci'"), $2}' | sort -n | awk '{if (($1!=xold) || ($2!=yold)) {print xold*"'$deci'", yold, s; s=0; xold=$1; yold=$2} else {s=s+1}}' | tail +2 | gmt xyz2grd -Gtmp.grd -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -V
+awk '{print $3,$4,1}' tmp | gmt blockmean -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -Sw | awk '{print $1, $2, $3-1}' | gmt xyz2grd -Gtmp.grd -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -V
 
 zmax=$(gmt grdinfo tmp.grd | egrep v_max | awk '{print $5}')
 gmt makecpt -Chot -Z -T0/$zmax/1 -D > tmp.cpt

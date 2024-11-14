@@ -3,7 +3,7 @@
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 # ported to gmt6 Oct 30, 2024
 
-rm gmt.*
+rm -f gmt.*
 gmt set MEASURE_UNIT INCH
 gmt set FONT_ANNOT_PRIMARY 10
 gmt set HEADER_FONT_SIZE 10
