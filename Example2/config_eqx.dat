@@ -34,7 +34,7 @@ QN QVRPBDMN	# model modification tests
 0 VRN		# 0-mcmc, 1-prior only, 2-output regular grid, 3-input from model file: V and/or Q R N, i.e 3 QV
 1 dummy 1 	# dummy
 3.5 0.5	0.25    # vp to start with
-1.76	0.3	# vp/vs to start with
+1.73	0.3	# vp/vs to start with
 15 5		# cell number to start with
 1.0		# start_noise
 0.0 0.0		# delay & sdev to start with
