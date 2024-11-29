@@ -1,0 +1,21 @@
+# 1. convert hypoDD phase data to mcmc format using convert.m and pha2mcmc.m
+
+# 2. use srun_mcmc_eq.sh (run) with data and config file on a linux cluster:
+sbatch srun_mcmc_eq.sh
+
+# 3. run plotting scripts in scricptsV2 from output dir with rjx files:
+dispe.sh
+disp_m_average_sl.sh 225000 100 0
+disp_eq.sh picks.mcmc
+
+# optionally
+disp_noise.sh 
+disp_eq_z.sh 225000
+disp_eq_evo.sh
+disp_msft_dist.sh picks.mcmc
+
+# output results files
+outputModels.sh
+
+# compare to input synthetics
+disp_error2.sh
