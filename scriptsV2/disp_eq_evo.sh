@@ -21,6 +21,7 @@ echo "using default burnin: $bi"
 eq=200
 echo "using default quake number: $eq"
 output="loc_evo${eq}"
+nc=20 #number of chains to show
 
 p="."
 
@@ -39,10 +40,14 @@ echo "$x0" "$x1" "$y0" "$y1" "$z0" "$z1"
 
 gmt psbasemap -JX6 -R"$x0/$x1/$y0/$y1" -BNWes -Bxaf+l"X [km]" -Byaf+l"Y [km]" -K -P -Y4.5 > "${output}.ps"
 
-for n in {1..6}; do
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W  -K -O -m">" >> "${output}.ps"
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7}' | gmt psxy -JX -R -Sc0.01 -G0 -K -O -m">" >> "${output}.ps"
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7}' | head -1 | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O -m">" >> "${output}.ps"
+echo XY
+for n in $(seq 1 $nc); do
+    nn=`echo $n | awk '{printf "%03d\n",$1}'`
+    f="$p/rjx-$nn"*.out
+    ls $f
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W  -K -O -m">" >> "${output}.ps"
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7}' | gmt psxy -JX -R -Sc0.01 -G0 -K -O -m">" >> "${output}.ps"
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $7}' | head -1 | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O -m">" >> "${output}.ps"
 done
 
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m">" >> "${output}.ps"
@@ -50,10 +55,14 @@ cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt ps
 
 gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -BSWen -Bxaf+l"X [km]" -Byaf+l"Z [km]" -K -P -Y-3 -O >> "${output}.ps"
 
-for n in {1..6}; do
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W -K -O -m">" >> "${output}.ps"
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8}' | gmt psxy -JX -R -Sc0.01 -G0 -K -O -m">" >> "${output}.ps"
-    cat "$p/rjx-00$n"*.out | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8}' | head -1 | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O -m">" >> "${output}.ps"
+echo XZ
+for n in $(seq 1 $nc); do
+    nn=`echo $n | awk '{printf "%03d\n",$1}'`
+    f="$p/rjx-$nn"*.out
+    ls $f
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8; if ($1=="sta") print ">"}' | gmt psxy -JX -R -W -K -O -m">" >> "${output}.ps"
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8}' | gmt psxy -JX -R -Sc0.01 -G0 -K -O -m">" >> "${output}.ps"
+    cat $f | awk '{if (($4=="'"$eq"'") && ($1=="EQ")) print $6, $8}' | head -1 | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O -m">" >> "${output}.ps"
 done
 
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $5}' | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m">" >> "${output}.ps"

@@ -117,10 +117,10 @@ for eqn in $eqn0; do
     echo "$x0" "$x1" "$z0" | awk '{print $1, $3; print $2, $3; print ">" }' | gmt psxy -JX -R -W -K -O -m >> "$output"
     
     echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> "$output"
-    mv "$output" "eq${eqn}.ps"
-    gmt psconvert -Tg "eq${eqn}.ps" -A
-    ls "$PWD/eq${eqn}.p"*
-    [[ "$(uname)" == "Darwin" ]] && open "eq${eqn}.png"
+    mv "$output" "loc_eq${eqn}.ps"
+    gmt psconvert -Tg "loc_eq${eqn}.ps" -A
+    ls "$PWD/loc_eq${eqn}.p"*
+    [[ "$(uname)" == "Darwin" ]] && open "loc_eq${eqn}.png"
     
 done
 

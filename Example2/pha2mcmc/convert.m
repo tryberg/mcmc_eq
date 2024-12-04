@@ -1,13 +1,12 @@
 
 %in
 phaseFile = 'Hood_syn.pha';
-staFile = 'stations.dat';
+staFile = 'stations.sta';
 vLon = -121.6950;
 vLat = 45.3740;
 
-%out
-mcmcPhaFile = '../picks.mcmc';
-mcmcSrcFile='../quakes.dat';   % mcmc src file
+%out dir
+outDir = '../';
 
 %%
-pha2mcmc(phaseFile,staFile,mcmcPhaFile,mcmcSrcFile,vLat,vLon)
+pha2mcmc(phaseFile,staFile,vLat,vLon,outDir)

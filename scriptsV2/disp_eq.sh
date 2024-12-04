@@ -71,7 +71,7 @@ awk '{print $3, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $3, $4, $6/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O >> eq.ps
 
 if [[ -f $quakes ]]; then
-    awk '{print $2, $3}' quakes.dat | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
+    awk '{print $2, $3}' $quakes | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 fi
 
 # z-y
@@ -89,7 +89,7 @@ fi
 awk '{if ($5<'$zmin') print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
 if [ -f $quakes ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
-    awk '{print $4, $3}' quakes.dat | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
+    awk '{print $4, $3}' $quakes | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 fi
 
 # x-z
@@ -100,8 +100,8 @@ awk '{print $3, $5, $6/2.0, $8/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy
 
 awk '{if ($5<'$zmin') print $3, $5}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
-if [ -f quakes.dat ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
-    awk '{print $2, $4}' quakes.dat | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
+if [ -f $quakes ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
+    awk '{print $2, $4}' $quakes | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 fi
 
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> eq.ps

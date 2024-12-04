@@ -3,6 +3,7 @@
 # Example script from Jeremy to run in parallel on HPC cluster using srun, sbatch, slurm
 # tuned for HOVENWEEP at USGS ARC: 
 # https://www.usgs.gov/advanced-research-computing/usgs-hovenweep-supercomputer
+# which has a default time limit of 2 days for jobs
 # remember to launch this script as "sbatch srun_mcmc_eq.sh"
 
 #SBATCH --nodes=1
@@ -10,8 +11,10 @@
 #SBATCH --mail-type=begin,end,fail
 #SBATCH --mail-user=jpesicek@usgs.gov
 #SBATCH --array=1-100
+
+# for jobs longer than 2 days:
 #SBATCH --qos=seven_days_max
-#SBATCH --time=7-0
+#SBATCH --time=5-0
 
 echo "SLURM_JOBID: " $SLURM_JOBID
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID

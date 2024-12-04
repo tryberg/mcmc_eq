@@ -1,4 +1,4 @@
-function pha2mcmc(phaseFile,staFile,mcmcPhaFile,mcmcEqFile,vlat,vlon)
+function pha2mcmc(phaseFile,staFile,vlat,vlon,outDir)
 
 %{
 
@@ -12,8 +12,6 @@ https://github.com/tryberg/mcmc_eq
 
 phaseFile:  hypoDD phase data file
 staFile:    hypoDD station.dat file
-mcmcPhaFile: picks.mcmc output file
-mcmcEqFile : mcmc_eq quakes.dat file for plotting
 vlat, vlon: coordinates for cartesian transformation
 
 requires Mapping Toolbox for geodetic2enu
@@ -26,9 +24,10 @@ staNames = getStaNamesFromPhaFile(phaseFile);
 fid = fopen(staFile);
 C = textscan(fid,'%s %f %f %d\n');
 lon = C{3}; lat = C{2};
-dep = -double(C{4})/1000;
+Elevation = C{4};
+dep = -double(Elevation)/1000;
 sname = C{1};
-sd = table(sname,lon,lat,dep, 'VariableNames', {'Station','Latitude','Longitude','Elevation'});
+sd = table(sname,lon,lat,Elevation,dep, 'VariableNames', {'Station','Longitude','Latitude','Elevation','Depth'});
 
 [~,ia,~] = intersect(sd.Station,staNames);
 [C,IA] = setdiff(sd.Station,staNames);
@@ -44,8 +43,13 @@ nsw = npw;
 
 %% grid origin
 E = wgs84Ellipsoid('kilometer');
-sz = -sd.Elevation./1000;
+% sz = -sd.Elevation./1000;
 [xEast,yNorth,~] = geodetic2enu(sd.Latitude,sd.Longitude,0,vlat,vlon,0,E);
+
+%%
+mcmcPhaFile=fullfile(outDir,'picks.mcmc');   
+mcmcEqFile=fullfile(outDir,'quakes.dat');   
+mcmcStaFile=fullfile(outDir,'stations.dat');  
 
 %%
 fid1=fopen(phaseFile,'r');
@@ -138,7 +142,7 @@ if fid1 ~= -1
                     sii = sii(1); %NOTE: fix later?
                 end
 
-                zi = sz(sii); %
+                zi = sd.Depth(sii); %
                 %                 zi = zUp(sii);
                 fprintf(fid2,'%4s %03d %1s %8.3f %8.3f %8.3f %8.3f %d\n',...
                     pha{i,1},sii-1,pha{i,4},xEast(sii),yNorth(sii),zi,str2double(pha{i,2}),qual);
@@ -160,6 +164,7 @@ fclose(fid1);
 fclose(fid2);
 fclose(fid3);
 ls(mcmcPhaFile)
+ls(mcmcEqFile)
 
 if max(ids) ~= numel(ids)-1
     error('FATAL')
@@ -175,6 +180,16 @@ if any(I)
     disp(sd(I,:).Station')
     warning('station with zero S picks')
 end
+
+%% stations in cartesian
+fid4=fopen(mcmcStaFile,'w'); %only needed for synthetics and disp_error script
+
+for i=1:numel(xEast)
+    % station number    x   y   z   Pcorr   Scorr (added later)
+    fprintf(fid4,'%3d %8.3f %8.3f %8.3f %8.3f %8.3f\n',i-1,xEast(i),yNorth(i),sd.Depth(i),0,0);
+end
+fclose(fid4);
+ls(mcmcStaFile)
 
 end
 %%
@@ -202,7 +217,7 @@ end
 %%
 function [yr,mo,dy,hr,mn,sc,lat,lon,dep,mag,eh,ez,rms,id] = readEventLine(line)
 
-C = textscan(line,'%c %d %d %d %d %d %f %f %f %f %f %f %f %f %c');
+C = textscan(line,'%s %d %d %d %d %d %f %f %f %f %f %f %f %f %s');
 yr = C{2}; mo = C{3}; dy = C{4}; hr = C{5}; mn = C{6}; sc = C{7};
 lat = C{8}; lon = C{9}; dep = C{10}; mag = C{11};
 eh = C{12}; ez = C{13}; rms = C{14}; id = C{15};
