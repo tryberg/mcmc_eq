@@ -26,8 +26,11 @@ ls stations.dat
 [[ -f "stations.dat" ]] || exit
 
 ls model.inp
-[[ -f "model.inp" ]] || echo "No input model to plot (model.inp)"
-_
+[[ -f "model.inp" ]] || echo "No input model to plot (model.inp), skip"
+
+ls tmpx
+if [ ! -f tmpx ]; then exit; fi
+
 # EQ x
 gmt psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"Quake_x dx [km]":/0SWen -K -P -Y8 -X0.7 > error.ps
 paste t1 $quakes | awk '{print $3-$14}' | gmt pshistogram -JX -R -W0.1 -Z0 -G0 -K -O -V -F >> error.ps
@@ -74,12 +77,12 @@ echo -2 90  "m/s="$m"+-"$s" s" | gmt pstext -JX -R -K -O -N -F+jBL >> error.ps
 gmt psbasemap -JX2/2 -R0.0/0.35/0/1500 -B0.1f0.05:"Data noise [s]":/0SWen -K -O -X2.35 >> error.ps
 
 # true values
-echo 0.04 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> error.ps
+#echo 0.04 | awk '{print $1, 0; print $1, 1500}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> error.ps
 #echo 0.10 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> error.ps
 #echo 0.15 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> error.ps
 #echo 0.20 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> error.ps
 
-echo 0.080 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> error.ps
+#echo 0.080 | awk '{print $1, 0; print $1, 1500}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> error.ps
 #echo 0.225 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> error.ps
 #echo 0.275 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> error.ps
 #echo 0.325 | awk '{print $1, 0; print $1, 2000}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> error.ps
@@ -90,8 +93,8 @@ egrep mod tmpx | awk '{print $6}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G0/0/25
 #egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G85/85/255 -K -O -V -F >> error.ps
 #egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G128/128/255 -K -O -V -F >> error.ps
 
-#egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/0/0 -K -O -V -F >> error.ps
-egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/42/42 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/0/0 -K -O -V -F >> error.ps
+#egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/42/42 -K -O -V -F >> error.ps
 #egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/85/85 -K -O -V -F >> error.ps
 #egrep mod tmpx | awk '{print $13}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/128/128 -K -O -V -F >> error.ps
 
@@ -123,14 +126,14 @@ echo -0.5 18  "m/s="$m"+-"$s" s" | gmt pstext -JX -R -K -O -N -F+jBL >> error.ps
 gmt psbasemap -JX1.2/-5 -R3/8/-5/30 -B1f0.5:"Vp [km/s]":/10f5g1000:"Depth [km]":Swen -K -O -X2.25 -Y0 >> error.ps
 egrep EZ $res | awk '{print 4, $5}' | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O >> error.ps
 
-test -f model.inp & awk '{print $2, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O -N >> error.ps
+test -f model.inp && awk '{print $2, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O -N >> error.ps
 awk '{if ($1=="STAN") print $7, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K -N  >> error.ps
 awk '{if ($1=="STAN") print $7-$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> error.ps
 awk '{if ($1=="STAN") print $7+$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> error.ps
 
 # Vp/Vs
 gmt psbasemap -JX1.2/-5 -R1.501/2/-5/30 -B0.2f0.1:"Vp/Vs":/10f5g1000:"Depth [km]":SwEn -K -O -X1.35  >> error.ps
-test -f model.inp & awk '{print $3, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O -N >> error.ps
+test -f model.inp && awk '{print $3, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O -N >> error.ps
 awk '{if ($1=="STAN") print $9, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K -N  >> error.ps
 awk '{if ($1=="STAN") print $9-$10, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> error.ps
 awk '{if ($1=="STAN") print $9+$10, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> error.ps
