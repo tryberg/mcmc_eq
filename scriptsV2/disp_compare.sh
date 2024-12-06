@@ -89,14 +89,14 @@ gmt psbasemap -JX2/2 -R0.0/0.35/0/1500 -B0.1f0.05:"Data noise [s]":/0SWen -K -O 
 
 
 egrep mod tmpx | awk '{print $6}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G0/0/255 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $7}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G42/42/255 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G85/85/255 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G128/128/255 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $7}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G42/42/255 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G85/85/255 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G128/128/255 -K -O -V -F >> error.ps
 
 egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/0/0 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/42/42 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/85/85 -K -O -V -F >> error.ps
-#egrep mod tmpx | awk '{print $13}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/128/128 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/42/42 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/85/85 -K -O -V -F >> error.ps
+egrep mod tmpx | awk '{print $13}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/128/128 -K -O -V -F >> error.ps
 
 
 # station correction P
