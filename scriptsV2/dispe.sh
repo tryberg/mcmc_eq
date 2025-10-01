@@ -3,12 +3,6 @@
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 # ported to gmt6 Oct 30, 2024
 
-echo "Checking for GMT6:"
-whereis -b gmt 
-if [[ -z "$(whereis -q -b gmt)" ]]; then
-    echo "install GMT?"
-    exit
-fi
 gmt --version
 
 rm -f gmt.*
