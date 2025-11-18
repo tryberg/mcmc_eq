@@ -141,8 +141,8 @@ awk '{if ($1=="STAN") print $7+$8, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} 
 # boundary
 max=$(awk '{if ($1=="STAN") print $13*1.1}' resmcnx.dat | sort -n | tail -1 | awk '{x=$1; if ($1==0) x=1; print x}')
 # set max = 1 (Uncomment the following line if you want to force max to 1)
-# max=1
-gmt psbasemap -JX1/-6 -R0/$max/$zmin/$zmax -B100f5:"Boundary":/10f5g10000SewN -K -X2.05 -O >> "${output}.ps"
+max=1
+gmt psbasemap -JX1/-6 -R0/$max/$zmin/$zmax -B1f.25:"Boundary":/10f5g10000SewN -K -X2.05 -O >> "${output}.ps"
 awk '{if ($1=="STAN") print $13, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W0.75,black -O -K -N >> "${output}.ps"
 
 # ------- SSSSSSS

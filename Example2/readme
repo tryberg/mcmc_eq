@@ -18,4 +18,4 @@ disp_msft_dist.sh picks.mcmc
 outputModels.sh
 
 # compare to input synthetics
-disp_error2.sh
+disp_compare.sh
