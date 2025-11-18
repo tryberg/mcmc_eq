@@ -3,6 +3,7 @@
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 # ported to gmt6 Oct 30, 2024
 
+echo "GMT version:"
 gmt --version
 
 rm -f gmt.*

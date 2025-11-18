@@ -22,6 +22,7 @@ eq=200
 echo "using default quake number: $eq"
 output="loc_evo${eq}"
 nc=20 #number of chains to show
+echo "using defualt number of chains: $nc"
 
 p="."
 

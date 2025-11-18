@@ -125,6 +125,14 @@ gmt pstext -JX -R -K -O -N -F+jBL >> "$output.ps"
 # hist count
 gmt psbasemap -JX -R -B1f0.5:"Vp":/10f5g10000SewN -K -X2.05 -O >> "${output}.ps"
 
+# plot generic model
+if command -v getGeneric1Dmodel.sh  >/dev/null 2>&1; then
+    getGeneric1Dmodel.sh $zmin $zmax > vp_generic.xy
+    gmt psxy vp_generic.xy -JX -R -W,black -O -K -N >> "${output}.ps"
+else
+    echo "getGeneric1Dmodel.sh not found in PATH"
+fi
+
 # modified
 awk '{if ($1=="STAN") print $7, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1.5,red -O -K -N >> "${output}.ps"
 awk '{if ($1=="STAN") print $7-$8, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N >> "${output}.ps"
@@ -148,16 +156,17 @@ gmt psbasemap -JX1.8/-6 -R$vmins/$vmaxs/$zmin/$zmax -B1f0.5:"Vp/Vs":/10f5g1000Se
 gmt grdimage hists.grd -JX -R -Ccolv.cpt -K -O >> "${output}.ps"
 
 # hist count
-gmt psbasemap -JX -R -B1f0.5g1.732:"Vp/Vs":/10f5g1000SewN -K -X2.05 -O >> "${output}.ps"
+gmt psbasemap -JX -R -B1f0.5g1.73:"Vp/Vs":/10f5g1000SewN -K -X2.05 -O >> "${output}.ps"
 
 # modified
-
 awk '{if ($1=="STAN") print $9, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1.5,red -O -K -N >> "${output}.ps"
 awk '{if ($1=="STAN") print $9-$10, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N >> "${output}.ps"
 awk '{if ($1=="STAN") print $9+$10, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N >> "${output}.ps"
 #awk '{if ($1=="STAN") print $5, $2}' resmcnbf.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | psxy -JX -R -W5/blue -O -K -N >> "${output}.ps"
 
 gmt psbasemap -JX1.5/-6 -R$vminvs/$vmaxvs/$zmin/$zmax -B1f0.5:"Vs":/10f5g10000SEwN -K -O -X2.05 >> "${output}.ps"
+
+test -f vp_generic.xy && awk '{print $1/1.73,$2}' vp_generic.xy | gmt psxy -JX -R -W,black -O -K -N >> "${output}.ps"
 
 awk '{if ($1=="STAN") print $7/$9, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1.5,red -O -K -N >> "${output}.ps"
 
