@@ -28,8 +28,8 @@ ls stations.dat
 ls model.inp
 [[ -f "model.inp" ]] || echo "No input model to plot (model.inp), skip"
 
-ls tmpx
-if [ ! -f tmpx ]; then exit; fi
+ls tmpx 
+[[ -f  tmpx ]] || { echo "need to run disp_m_average_sl.sh first" ; exit 1 ; }
 
 # EQ x
 gmt psbasemap -JX2/2 -R-2/2/0/100 -B1f0.1g100:"Quake_x dx [km]":/0SWen -K -P -Y8 -X0.7 > error.ps
