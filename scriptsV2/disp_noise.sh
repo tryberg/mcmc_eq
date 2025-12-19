@@ -16,7 +16,7 @@ ls tmpx
 if [ ! -f tmpx ]; then exit; fi
 egrep mod tmpx | awk '{if ($3>0) print $5, $6, $7, $8, $9, $10, $11, $12, $13}' > t1
 
-gmt psbasemap -JX8/6 -R0/0.8/0/3000 -B0.05f0.01g0.05:"Seconds":/1000nSWe -K > noise.ps
+gmt psbasemap -JX8/6 -R0/0.2/0/2000 -B0.05f0.01g0.05:"Seconds":/1000nSWe -K > noise.ps
 awk '{print $1}' t1 | gmt pshistogram -JX -R -W0.001 -Z0 -G0 -K -O -V -F >> noise.ps
 
 awk '{print $2}' t1 | gmt pshistogram -JX -R -W0.001 -Z0 -G0/0/255 -K -O -V -F >> noise.ps

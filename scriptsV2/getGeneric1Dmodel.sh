@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pesicek & Ryberg generic Vp volcano model:
+# Pesicek & Ryberg (2024) generic Vp volcano model:
 # Vp = 0.000101*z^3 - 0.007799*z^2 + 0.241784*z + 4.301992 
 
 # Check if at least two arguments provided
