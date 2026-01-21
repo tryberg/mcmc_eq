@@ -8,7 +8,7 @@ disp_eq.sh picks.mcmc
 # optionally
 disp_noise.sh
 disp_eq_z.sh 225000
-disp_eq_evo.sh
+disp_eq_evo.sh 225000
 disp_msft_dist.sh picks.mcmc
 
 # output results files

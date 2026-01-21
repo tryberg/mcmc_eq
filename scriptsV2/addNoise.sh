@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# this is a readable version of the awk script within mkSynthetics courtesy of Claude
+
 # Add gaussian noise to seismic arrival times
 # Noise levels by quality code:
 #   P-wave: P0=0.05s, P1=0.10s, P2=0.15s, P3=0.20s
@@ -8,6 +10,7 @@
 # Configuration
 RMS_NOISE=0.03        # Base RMS noise level
 RANDOM_SEED=33        # Random seed for reproducibility
+RANDOM_SEED=$RANDOM   
 INPUT_FILE="synths_wo_noise"
 OUTPUT_FILE="synths_with_noise"
 

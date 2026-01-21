@@ -75,7 +75,7 @@ if [[ -f $quakes ]]; then
 fi
 
 # z-y
-gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -BsENw -Bxafg1000 -Byaf+l"$PWD" -K -O -X"$xs" >> eq.ps
+gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -BsENw -Bxafg1000 -Byaf+l"`basename $PWD`" -K -O -X"$xs" >> eq.ps
 awk '{print $8, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> eq.ps
 awk '{print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $5, $4, $8/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps

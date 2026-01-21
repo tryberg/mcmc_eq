@@ -15,7 +15,7 @@ eq=$(awk '{if (NR==30) print $1}' "$cfg") # needs to be past burn-in phase!
 vv=$(awk '{if (NR==30) print $2}' "$cfg")
 tot=$(echo "$vv $eq" | awk '{print $1+$2}')
 
-str="<start model number post burn-in, b/t $eq and $tot> [<event number[s] to plot (default#: 200)>] [<window half length (5 km)>]"
+str="<start model number post burn-in, b/t $eq and $tot> [<event number[s] to plot (default#: 100)>] [<window half length (5 km)>]"
 me=`basename "$0"`
 
 if [ "$#" -lt 1 ]
@@ -37,7 +37,7 @@ else
 fi
 
 [ "$#" -gt 1 ] && eqn0=$2
-[ "$#" -gt 1 ] || eqn0=200
+[ "$#" -gt 1 ] || eqn0=100
 echo "using quake number $eqn0"
 
 f="resmcnx.dat"

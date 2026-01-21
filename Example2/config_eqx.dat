@@ -27,7 +27,7 @@
 -1.0		# minimum layer thickness in fractions of dz, i <0 no LVZ !!! should be !=0
 0 0 0.0 0.0	# reference station + flag, =0: zero mean, =1: p fixed, =2: P&S fixed, =-1: invert for P only, =-2 for S only
 0		# Voronoi cells if = 0, triangulation if = 1
-50000 200000	# number of models in chain
+30000 200000	# number of models in chain
 500		# output every nth model
 -77	1	# if <0 true random search, otherwise from seed n, 0=str 1=eik
 QN QVRPBDMN	# model modification tests

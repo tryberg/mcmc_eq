@@ -38,6 +38,7 @@ paste $pick_file predictions | awk '{if ($1=="#") {print $1, $2, $3, $4, $5;} el
 # add gaussian noise: P0 0.015 P1 0.030 P2 0.045 P3 0.060 S0 0.0525 S1 0.0675 S2 0.0825 S3 0.0975
 rms=0.03
 rseed=33
+rseed=$RANDOM
 awk 'BEGIN {srand(1*"'$rseed'")}{do {x1=2.0*rand()-1; x2=2.0*rand()-1; s=x1*x1+x2*x2;} while ((s>1) || (s==0)); rnd=x1*sqrt(-2.0*log(s)/s); if ($1=="#") {print $0;} else {f=0; if ($3=="S") {f=1;} print $1, $2, $3, $4, $5, $6, $7+rnd*"'$rms'"*(($8+1+2.5*f)/4)*2, $8}}' synths_wo_noise >  synths_with_noise
 
 # P and S equal weight:
@@ -50,5 +51,6 @@ fw $cfg res.dat synths_with_noise > t1
 awk '{if ($1=="#") print $0; else printf "%4s %03d %1s %8.3f %8.3f %8.3f %8.3f %d\n",$1,$2,$3,$4,$5,$6,$7,$8}' synths_with_noise > picks.mcmc
 
 # clean-up
-rm res.dat synths_with_noise synths_wo_noise t1 predictions
+#rm synths_with_noise synths_wo_noise 
+rm res.dat t1 predictions
 

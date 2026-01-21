@@ -9,6 +9,30 @@ ls "$res"
 [[ -f "$res" ]] || exit
 rm -f gmt.*
 
+z0=$(awk 'NR==7 {print $1}' "$cfg")
+eq=$(awk '{if (NR==30) print $1}' "$cfg") # needs to be past burn-in phase!
+vv=$(awk '{if (NR==30) print $2}' "$cfg")
+tot=$(echo "$vv $eq" | awk '{print $1+$2}')
+
+str="<start model number post burn-in, b/t $eq and $tot> [<event number to plot (100)>] [<number of chains to show (20)>]" 
+me=`basename "$0"`
+
+if [ "$#" -lt 1 ]
+then
+echo "${me}: $str"
+exit
+else
+echo post burn-in input number: $1
+fi
+
+if (( $1 > $eq && $1 < $tot )); then
+    bi=$1
+else
+    echo "error: bad 1st input value"
+    echo "$str"
+    exit
+fi
+
 gmt set MEASURE_UNIT INCH
 gmt set FONT_ANNOT_PRIMARY 10
 gmt set HEADER_FONT_SIZE 10
@@ -16,13 +40,15 @@ gmt set HEADER_OFFSET 0.5c
 gmt set LABEL_FONT_SIZE 10
 gmt set COLOR_NAN 200/200/200
 
-bi=200000
-echo "using default burnin: $bi"
-eq=200
-echo "using default quake number: $eq"
+[ "$#" -gt 1 ] && eq=$2
+[ "$#" -gt 1 ] || eq=100
+[ "$#" -gt 2 ] && nc=$3
+[ "$#" -gt 2 ] || nc=20 
+
+bi=$1
+echo "using quake number: $eq"
 output="loc_evo${eq}"
-nc=20 #number of chains to show
-echo "using defualt number of chains: $nc"
+echo "using number of chains: $nc"
 
 p="."
 
@@ -53,6 +79,8 @@ done
 
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m">" >> "${output}.ps"
 cat "$p/$res" | awk '{if (($2=="'"$eq"'") && ($1=="EQ")) print $3, $4}' | gmt psxy -JX -R -Sc0.03 -Gblue -K -O -m">" >> "${output}.ps"
+
+echo $x0 $y1 "Event: "$eq"" | gmt pstext -JX -R -K -O -N -F+jTL -D.1/-.1 >> "${output}.ps"
 
 gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -BSWen -Bxaf+l"X [km]" -Byaf+l"Z [km]" -K -P -Y-3 -O >> "${output}.ps"
 

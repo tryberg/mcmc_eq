@@ -90,11 +90,27 @@ echo 0.0825 | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W2,255/200/
 echo 0.0975 | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
 
 echo "start noise"
+s=$(egrep mod tmpx | awk '{print $6}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,0/0/255,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $7}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,42/42/255,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $8}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,85/85/255,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $9}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,128/128/255,dotted -O -K -N >> $out.ps
 egrep mod tmpx | awk '{print $6}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G0/0/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $7}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G42/42/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G85/85/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G128/128/255 -K -O -F -V >> $out.ps
 
+s=$(egrep mod tmpx | awk '{print $10}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,255/0/0,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $11}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,255/42/42,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $12}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,255/85/85,dotted -O -K -N >> $out.ps
+s=$(egrep mod tmpx | awk '{print $13}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+echo $s | awk '{print $1, 0; print $1, 1000}' | gmt psxy -JX -R -W1,255/128/128,dotted -O -K -N >> $out.ps
 egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/0/0 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/42/42 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -W0.0005 -Z0 -G255/85/85 -K -O -F -V >> $out.ps
