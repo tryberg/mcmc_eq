@@ -52,5 +52,5 @@ awk '{if ($1=="#") print $0; else printf "%4s %03d %1s %8.3f %8.3f %8.3f %8.3f %
 
 # clean-up
 #rm synths_with_noise synths_wo_noise 
-rm res.dat t1 predictions
+#rm res.dat t1 predictions
 

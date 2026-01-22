@@ -70,7 +70,7 @@ gmt makecpt -Chot -Z -T0/$zmax/1 -D > tmp.cpt
 gmt grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
 echo "$eq $lymin $eq $lymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B -W -K -O >> evo.ps
 echo "$bi $lymin $bi $lymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B -W -K -O >> evo.ps
-gmt psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models":/2f3:"Misfit [s]":nSW -K -O >> evo.ps
+gmt psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -Baf:"evaluated models":/2f3:"Misfit [s]":nSW -K -O >> evo.ps
 
 gmt psbasemap -JX-1/3l -R0/1/$ymin/$ymax -B0/2f3nSEw -K -O -X5 >> evo.ps
 
