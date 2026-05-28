@@ -22,11 +22,10 @@ me=`basename "$0"`
 if [ "$#" -lt 1 ]
 then
 echo "${me}: $str"
-echo "optionally plot multiple event numbers with quotes for 2nd input"
 exit
 else
 echo post burn-in input number: $1
-echo event ID[s]: $2
+echo event ID: $2
 fi
 
 if (( $1 > $eq && $1 < $tot )); then

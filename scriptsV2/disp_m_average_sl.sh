@@ -117,7 +117,7 @@ gmt grd2cpt -Cseis -Z -D -I histp.grd > colv.cpt
 
 # Model
 gmt psbasemap -JX1.8/-6 -R"$vmin/$vmax/$zmin/$zmax" -B1f0.5:"Vp":/10f5g10000SeWN -K -Y1.6 -X0.4 > "$output.ps"
-gmt grdimage histp.grd -JX -R -Ccolv.cpt -K -O >> "$output.ps"
+test -s colv.cpt && gmt grdimage histp.grd -JX -R -Ccolv.cpt -K -O >> "$output.ps"
 echo "$vmin" "$zmax" "$bi" "$p" "$prms" "$all" "$allp" "$allr" "$(pwd)" | 
 awk '{print $1, $2 * 1.15, 10, 0, 0, 0, "BI", $3, "P", $4, "PRMS", $5, $6, "/", $7, "/", $8, $9}' | 
 gmt pstext -JX -R -K -O -N -F+jBL >> "$output.ps"
@@ -139,11 +139,11 @@ awk '{if ($1=="STAN") print $7-$8, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} 
 awk '{if ($1=="STAN") print $7+$8, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N >> "${output}.ps"
 
 # boundary
-max=$(awk '{if ($1=="STAN") print $13*1.1}' resmcnx.dat | sort -n | tail -1 | awk '{x=$1; if ($1==0) x=1; print x}')
-# set max = 1 (Uncomment the following line if you want to force max to 1)
+#max=$(awk '{if ($1=="STAN") print $13*1.1}' resmcnx.dat | sort -n | tail -1 | awk '{x=$1; if ($1==0) x=1; print x}')
+# (Uncomment the following line if you want to force max to 1)
 max=1
 gmt psbasemap -JX1/-6 -R0/$max/$zmin/$zmax -B1f.25:"Boundary":/10f5g10000SewN -K -X2.05 -O >> "${output}.ps"
-awk '{if ($1=="STAN") print $13, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W0.75,black -O -K -N >> "${output}.ps"
+test -s colv.cpt && awk '{if ($1=="STAN") print $13, $2}' resmcnx.dat | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W0.75,black -O -K -N >> "${output}.ps"
 
 # ------- SSSSSSS
 awk '{if ($1=="BINV") print $2, $3, $4}' resmcnx.dat | awk '{if ($3>0) print $0}' | gmt xyz2grd -I$dvpvs/$d -R$vmins/$vmaxs/$zmin/$zmax -Ghists.grd -V
@@ -153,7 +153,7 @@ awk '{if ($1=="BINV") print $2, $3, $4}' resmcnx.dat | awk '{if ($3>0) print $0}
 gmt grd2cpt -Cseis -Z -D -I histp.grd > colv.cpt
 
 gmt psbasemap -JX1.8/-6 -R$vmins/$vmaxs/$zmin/$zmax -B1f0.5:"Vp/Vs":/10f5g1000SewN -K -O -X1.2 >> "${output}.ps"
-gmt grdimage hists.grd -JX -R -Ccolv.cpt -K -O >> "${output}.ps"
+test -s colv.cpt && gmt grdimage hists.grd -JX -R -Ccolv.cpt -K -O >> "${output}.ps"
 
 # hist count
 gmt psbasemap -JX -R -B1f0.5g1.73:"Vp/Vs":/10f5g1000SewN -K -X2.05 -O >> "${output}.ps"

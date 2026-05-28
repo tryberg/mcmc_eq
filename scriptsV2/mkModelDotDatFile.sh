@@ -31,10 +31,13 @@ nl=`cat $prior_model | wc -l`
 # construct input file
 awk '{print "STAN", $1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' $prior_model > res.dat
 # do these matter or can I put zeros here?
-awk '{print "EQ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
-awk '{print "EZ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
+#awk '{print "EQ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
+#awk '{print "EZ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
+awk '{print "EQ",$1, 0, 0, 0,0,0,0,0,0,0,0}' quakes.dat >> res.dat
+awk '{print "EZ",$1, 0, 0, 0,0,0,0,0,0,0,0}' quakes.dat >> res.dat
 # to load prior corrections only, not needed? put zeros instead?
-awk '{print "RES", $1, $5, $6, 0, 0}' stations.dat >> res.dat
+#awk '{print "RES", $1, $5, $6, 0, 0}' stations.dat >> res.dat
+awk '{print "RES", $1, 0, 0, 0, 0}' stations.dat >> res.dat
 echo "NOISE 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1"  >> res.dat
 mv res.dat model.dat
 ls model.dat

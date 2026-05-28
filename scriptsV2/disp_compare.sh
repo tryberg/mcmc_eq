@@ -143,7 +143,8 @@ gmt psbasemap -JX1.2/-5 -R3/8/-5/35 -B1f0.5:"Vp [km/s]":/10f5g1000:"Depth [km]":
 egrep EZ $res | awk '{print 4, $5}' | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O >> $out.ps
 awk '{print 3.5,$4}' $quakes | gmt psxy -JX -R -Sc0.05 -Gdarkgreen -K -O >> $out.ps
 
-test -f model.inp && awk '{print $2, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O -N >> $out.ps
+test -f model.inp && awk '{print $2, $1}' model.inp | gmt psxy -JX -R -W1,magenta -K -O >> $out.ps
+test -f vp_generic.xy && gmt psxy vp_generic.xy -JX -R -W1,blue -K -O >> $out.ps
 awk '{if ($1=="STAN") print $7, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K -N  >> $out.ps
 awk '{if ($1=="STAN") print $7-$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> $out.ps
 awk '{if ($1=="STAN") print $7+$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> $out.ps

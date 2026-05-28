@@ -83,6 +83,10 @@ awk '{if ($1 > 0) print $2 / 100.0, $1}' mallpbic.dat | gmt psxy -JX -R -K -O -W
 # Dim
 ymin=0
 ymax=30
+ymax2=`awk '{print $4}' tmp | gmt info -Eh` 
+ymax=$(( ymax > ymax2 ? ymax : ymax2 )) # if input layers greater than default 30, use it
+ymax=$(( ((ymax + 4) / 5) * 5 )) # round up
+
 gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B0n -K -P -X-5 -Y4 -O >> evo.ps
 
 awk '{print $3,$4,1}' tmp | gmt blockmean -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -Sw | awk '{print $1, $2, $3-1}' | gmt xyz2grd -Gtmp.grd -R$xmin/$xmax/$ymin/$ymax -I$deci/1 -V

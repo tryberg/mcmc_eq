@@ -55,7 +55,7 @@ awk '{if ($1!="#" && $2!="NA") print $1, $2, $4, $5, $6}' "$picks" | sort | uniq
 egrep EZ "$res" > resmcna.tmp
 
 # x-y
-gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -Baf -BNWse -K -X0.7 -Y2.9 > eq.ps
+gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -Bxaf+l"X [km]" -Byaf+l"Y [km]" -BNWse -K -X0.7 -Y2.9 > eq.ps
 
 paste t1 rec.dat > recdata
 stac=staCors_mcmc.dat
@@ -75,7 +75,7 @@ if [[ -f $quakes ]]; then
 fi
 
 # z-y
-gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -BsENw -Bxafg1000 -Byaf+l"`basename $PWD`" -K -O -X"$xs" >> eq.ps
+gmt psbasemap -JX"$zs/$ys" -R"$zmin/$zmax/$ymin/$ymax" -BseNw -Bxafg1000+l"Z [km]" -Byaf+l"`basename $PWD`" -K -O -X"$xs" >> eq.ps
 awk '{print $8, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> eq.ps
 awk '{print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $5, $4, $8/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps
@@ -87,24 +87,26 @@ if [ "$na" -gt 0 ]; then
     cat zbad.tmp
 fi
 awk '{if ($5<'$zmin') print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
+#awk '{if ($5<'$zmin') print '$zmin', $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
 if [ -f $quakes ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
     awk '{print $4, $3}' $quakes | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 fi
 
 # x-z
-gmt psbasemap -JX"$xs/-$zs" -R"$xmin/$xmax/$zmin/$zmax" -BWsne -Byafg1000 -Bxaf -K -O -X-"$xs" -Y-"$zs" >> eq.ps
+gmt psbasemap -JX"$xs/-$zs" -R"$xmin/$xmax/$zmin/$zmax" -BWsne -Byafg1000+l"Z [km]" -Bxaf -K -O -X-"$xs" -Y-"$zs" >> eq.ps
 awk '{print $6, $8}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> eq.ps
 awk '{print $3, $5}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $3, $5, $6/2.0, $8/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps
 
 awk '{if ($5<'$zmin') print $3, $5}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
+#awk '{if ($5<'$zmin') print $3, '$zmin'}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 
 if [ -f $quakes ]; then  # known locations file for comparison (ID,X,Y,Z,OT,0)
     awk '{print $2, $4}' $quakes | gmt psxy -JX -R -Sc0.01 -Gblue -K -O >> eq.ps
 fi
 
-echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> eq.ps
+echo 0 0 | gmt psxy -JX -R -Sc0.001 -O -U"`basename $PWD`" -Y1c -X1c >> eq.ps
 
 gmt psconvert -Tg eq.ps -A
 ls $PWD/eq.ps 
