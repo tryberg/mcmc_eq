@@ -8,8 +8,8 @@
 #   S-wave: S0=0.175s, S1=0.225s, S2=0.275s, S3=0.325s
 
 # Configuration
-RMS_NOISE=0.03        # Base RMS noise level
-RANDOM_SEED=33        # Random seed for reproducibility
+RMS_NOISE=0.05       # Base RMS noise level
+#RANDOM_SEED=33        # Random seed for reproducibility
 RANDOM_SEED=$RANDOM   
 INPUT_FILE="synths_wo_noise"
 OUTPUT_FILE="synths_with_noise"
