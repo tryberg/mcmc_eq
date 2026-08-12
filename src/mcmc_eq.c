@@ -1,52 +1,26 @@
-// Program to invert P & S picks for location & structure by MCMC
-
-/* *******************************************
-		     mcmc_eq
-	
-	Inversion of travel times to locate earthquakes
-	and derive 1D velocity models using a statistical 
-	Markov chain Monte Carlo method
-	
-	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
-	
-	Copyright (C) 2024
-	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
-
-	Version 2.0	 1. May  2024
-	Version 3.0	 4. July 2024
-
-   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
-   SPDX-License-Identifier: GPL-3.0-only 	
-
-   ******************************************* */
-   
 /*
- *
- * This file is part of the mcmc_eq package.
- *
- * mcmc_eq is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; version GPL-3.0-only.
- *
- * mcmc_eq is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with mcmc_eq; see the file COPYING.  If not, write to
- * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
- *
- */
+     Program to calculate FD traveltimes for shot data (2D)
+     
+     model is defined on arbitrary points 
+     performs delauney triangulation of these points (meshing)
+     and generates FD grid from the mesh
+     
+     Written by Christian Haberland, GFZ Potsdam, July/August 2016
+     
+     uses Triangle routine by J.R Shewchuk and 
+     time_2d routine by Podvin & Lecomte
+     
+     compile:
+     cc -DTRILIBRARY -O -c triangle.c 
+     gcc -O -c time_2d.c -o time_2d.o ; gcc -O -c mod_grd.c -o mod_grd.o ;  gcc -O mcmc_2d_tomo.c time_2d.o triangle.o mod_grd.o -o mcmc_2d_tomo -lm 
 
 
+*/
 
 // don't use TRIA
 // no priors, no weights
 // fixed P, S & P/S station corrections
 // 191023 modification for compiler
-// 190624 cleanup, misfit & interpol in common file
 
 #include <stdio.h>
 #include <math.h>
@@ -63,20 +37,16 @@ FILE *fpout;
 int read_mcmcdata (FILE *f, struct DATA *d);
 void write_mcmcdata (struct DATA *d, int ne);
 
-float cal_fit_newx (struct Model *m, struct DATA *d, int ne, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
+float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
 float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0);
 float dst (float x1, float x2, float y1, float y2);
-
 void setup_table_new (struct Model *m, float ***ttt, struct GRDHEAD gh, int ps);
 void read_single_line(FILE *fp, char x[]);
 void copy_model(struct Model *dest, struct Model *src);
 int find_neighbor_cell(struct Model *modx, int n);
 int find_in_cell(struct Model *modx, float x);
 void model_to_hsbuf(struct Model *modx, struct GRDHEAD gh, float *hsbuf);
-
-#include "interpol.c"
-#include "misfit.c"
-
+//int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 int check_string(char string[], char x)
 {
@@ -264,6 +234,8 @@ unsigned int get_seed (void)
 	return(seed);
 }
 
+#include "forward.c"
+
 // --------------main-------------------------------------------------------------
 
 int main(int argc, char *argv[])
@@ -316,8 +288,8 @@ struct Model old_model, new_model, best_model;
  float start_delay, sdev_start_delay,r_start_eqh,r_start_eqv;
  float start_vpvs, sdev_start_vpvs,inv_control;
  int ff,reference_station;
- 
 
+ 
  float fac, epi_search;
 
  int mod_from_file, scor_flag, xflag, lvz_flag, revert;
@@ -616,8 +588,8 @@ struct Model old_model, new_model, best_model;
 
 
 // ini ALL station corrections
-for (i=0; i<MAX_OBS; i++) old_model.pres[i]=-99999;
-for (i=0; i<MAX_OBS; i++) old_model.sres[i]=-99999;
+for (i=0; i<MAX_STAT; i++) old_model.pres[i]=-99999;
+for (i=0; i<MAX_STAT; i++) old_model.sres[i]=-99999;
 
 // set ini RES & origin times start_delay, &sdev_start_delay
   for (i=0; i<old_model.nos; i++) old_model.pres[i]=start_delay+rand_gauss_bounded(start_delay, sdev_start_delay, residual_min, residual_max);
@@ -736,7 +708,7 @@ fprintf(stderr,"reading noise \n");
 
 // ini chain
  clock_t start = clock(), diff;
- old_misfit = cal_fit_newx(&old_model, s, ne, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0);
+ old_misfit = cal_fit_newx(&old_model, s, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal, 0);
  diff = clock() - start;  
  int msec = diff * 1000 / CLOCKS_PER_SEC;
  fprintf(stderr, "Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
@@ -767,7 +739,7 @@ fprintf(stderr,"reading noise \n");
  
 // balancing pertubation strings 1st phase
  strncat(pstring_start, "", 1);
- for (i=0; i<strlen(dstring_start); i++)
+ for (i=0; i<(long) strlen(dstring_start); i++)
  {
    ctestcase=dstring_start[i];
    switch(ctestcase)
@@ -801,7 +773,7 @@ fprintf(stderr,"reading noise \n");
  
 // balancing pertubation strings 2nd phase
  strncat(pstring_main, "", 1);
- for (i=0; i<strlen(dstring_main); i++)
+ for (i=0; i<(long) strlen(dstring_main); i++)
  {
    ctestcase=dstring_main[i];
    switch(ctestcase)
@@ -862,6 +834,8 @@ fprintf(stderr,"reading noise \n");
    if (j>j_max_start) {testcase=rand_eq_int(strlen(pstring_main));ctestcase=pstring_main[testcase]; fac=1.0;}
   model_not_valid=0;
 //fprintf(stderr,"test %c\n",ctestcase);
+   decision="XX";
+   alpha12=0;
 
   switch(ctestcase) 
   {
@@ -881,7 +855,7 @@ fprintf(stderr,"reading noise \n");
     new_model.eq[index].y=new_model.eq[index].y+dy;
     new_model.eq[index].z=new_model.eq[index].z+dz;
 
-    new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag,eikonal,0); nmod++;
+    new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag,eikonal, 0); nmod++;
     new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
     new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
     new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -901,20 +875,16 @@ fprintf(stderr,"reading noise \n");
     index=rand_eq_int(new_model.nos);
     dx=rand_gauss_bounded(new_model.pres[index], sdevresidual, residual_min,residual_max);
     dy=rand_gauss_bounded(new_model.sres[index], sdevresidual, residual_min,residual_max);
-
-// for P or S station corrections only
-    if (scor_flag==-1) dy=0.0; // P statcor only
-    if (scor_flag==-2) dx=0.0; // S statcor only
-	
+    
 // no reference station -> zero mean <delay>==0 for P & S
-    if ((scor_flag==0) || (scor_flag==-1) || (scor_flag==-2))
+    if (scor_flag==0)
     {
 	new_model.pres[index]=new_model.pres[index]+dx;
 	new_model.sres[index]=new_model.sres[index]+dy;
 	for (jj=0; jj<new_model.nos; jj++) if (jj!=index) new_model.pres[jj]=new_model.pres[jj]-dx/(new_model.nos-1);
     	for (jj=0; jj<new_model.nos; jj++) if (jj!=index) new_model.sres[jj]=new_model.sres[jj]-dy/(new_model.nos-1);
     }
-	
+    
 // with reference station
     if (scor_flag!=0)
     {
@@ -927,7 +897,7 @@ fprintf(stderr,"reading noise \n");
     	new_model.sres[index]=new_model.sres[index]+dy;
     }
     
-    new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+    new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal, 0); nmod++;
     new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
     new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
     new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -950,7 +920,7 @@ fprintf(stderr,"reading noise \n");
      new_model.vp[index]=new_model.vp[index]+dvp;
     } while (model_valid(&new_model, gh.h, zmin, zmax, inv_control)!=0);
 
-    new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+    new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal, 0); nmod++;
     new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
     new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
     new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -972,7 +942,7 @@ fprintf(stderr,"reading noise \n");
      new_model.vpvs[index]=new_model.vpvs[index]+dvs;
     } while (model_valid(&new_model, gh.h, zmin, zmax, inv_control)!=0);
 
-    new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 2,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+    new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 2,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
     new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
     new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
     new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -994,14 +964,15 @@ fprintf(stderr,"reading noise \n");
      do
      {
       copy_model(&new_model,&old_model);
+      index=-1;
       if (TRIA==0) index=rand_eq_int(new_model.dimension);
       if (TRIA==1) index=2+rand_eq_int(new_model.dimension-2);
       if (index<0) {index=0; ff=1; exit(0);} // emergency exit
-       dz=rand_gauss_bounded(new_model.z[index], sdevz, zmin, zmax);
+      dz=rand_gauss_bounded(new_model.z[index], sdevz, zmin, zmax);
       new_model.z[index]=new_model.z[index]+dz;
      } while (model_valid(&new_model, gh.h, zmin, zmax, inv_control)!=0);
     
-     new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+     new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
      new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
      new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
      new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -1038,7 +1009,7 @@ fprintf(stderr,"reading noise \n");
      log_fac=log(sdevvp*sqrt(2.0*PI)/(vpmax-vpmin))+(new_model.vp[new_model.dimension-1]-new_model.vp[index])*(new_model.vp[new_model.dimension-1]-new_model.vp[index])/2.0/sdevvp/sdevvp;
      if (sdevvpvs!=0) log_fac=log_fac+log(sdevvpvs*sqrt(2.0*PI)/(vpvsmax-vpvsmin))+(new_model.vpvs[new_model.dimension-1]-new_model.vpvs[index])*(new_model.vpvs[new_model.dimension-1]-new_model.vpvs[index])/2.0/sdevvpvs/sdevvpvs;
 
-     new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+     new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
      new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
      new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
      new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -1063,12 +1034,13 @@ fprintf(stderr,"reading noise \n");
      do
      {
       copy_model(&new_model,&old_model);
+      index=-1;
       if (TRIA==0) index=rand_eq_int(new_model.dimension);
       if (TRIA==1) index=2+rand_eq_int(new_model.dimension-2);
       if (index<0) {index=0; ff=1; exit(0);} // emergency exit
       ideath=index;
       index=find_neighbor_cell(&new_model,ideath);   log_fac=log((vpmax-vpmin)/sdevvp/sqrt(2.0*PI))-(new_model.vp[ideath]-new_model.vp[index])*(new_model.vp[ideath]-new_model.vp[index])/2.0/sdevvp/sdevvp;
-      if (sdevvpvs!=0)log_fac=log_fac+log((vpvsmax-vpvsmin)/sdevvpvs/sqrt(2.0*PI))-(new_model.vpvs[ideath]-new_model.vpvs[index])*(new_model.vpvs[ideath]-new_model.vpvs[index])/2.0/sdevvpvs/sdevvpvs;
+      if (sdevvpvs!=0) log_fac=log_fac+log((vpvsmax-vpvsmin)/sdevvpvs/sqrt(2.0*PI))-(new_model.vpvs[ideath]-new_model.vpvs[index])*(new_model.vpvs[ideath]-new_model.vpvs[index])/2.0/sdevvpvs/sdevvpvs;
 // update model dimension  remove cell ideath, replace cell value[index]
       new_model.dimension=new_model.dimension-1;
       for (i=ideath; i<new_model.dimension; i++)
@@ -1079,7 +1051,7 @@ fprintf(stderr,"reading noise \n");
       }
      } while (model_valid(&new_model, gh.h, zmin, zmax, inv_control)!=0);
 
-     new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
+     new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 3,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++;
      new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
      new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
      new_misfit=new_misfit+mfp2/new_model.p_noise2/new_model.p_noise2+mfs2/new_model.s_noise2/new_model.s_noise2;
@@ -1116,7 +1088,7 @@ fprintf(stderr,"reading noise \n");
     log_fac=log_fac+n_ppicks2*log(old_model.p_noise2/new_model.p_noise2)+n_spicks2*log(old_model.s_noise2/new_model.s_noise2);
     log_fac=log_fac+n_ppicks3*log(old_model.p_noise3/new_model.p_noise3)+n_spicks3*log(old_model.s_noise3/new_model.s_noise3);
    
-    new_misfit=cal_fit_newx(&new_model, s, ne, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++; 
+    new_misfit=cal_fit_newx(&new_model, s, tttpr, tttsr, gh, 0,&mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,0); nmod++; 
 
     new_misfit=mfp0/new_model.p_noise0/new_model.p_noise0+mfs0/new_model.s_noise0/new_model.s_noise0;
     new_misfit=new_misfit+mfp1/new_model.p_noise1/new_model.p_noise1+mfs1/new_model.s_noise1/new_model.s_noise1;
@@ -1244,6 +1216,7 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 			if (strchr(ph,'P')!=NULL)
 			{
 				if (np==MAX_OBS) {fprintf(stderr, "number of picks to large! MAX_OBS in mc.h!\n"); exit(0);}
+				if (st_id>=MAX_STAT) {fprintf(stderr, "number of stations to large! MAX_STAT in mc.h!\n"); exit(0);}
 				d[i].p_picks[np].st_id = st_id;
 				d[i].p_picks[np].x = x;
 				d[i].p_picks[np].y = y;
@@ -1260,6 +1233,7 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 			else
 			{
 				if (ns==MAX_OBS) {fprintf(stderr, "number of picks to large! MAX_OBS in mc.h!\n"); exit(0);}
+				if (st_id>=MAX_STAT) {fprintf(stderr, "number of stations to large! MAX_STAT in mc.h!\n"); exit(0);}
 				d[i].s_picks[ns].st_id = st_id;
 				d[i].s_picks[ns].x = x;
 				d[i].s_picks[ns].y = y;
@@ -1298,12 +1272,3 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 	
 	return(ne);
 }
-
-/* -------------------------------------------------------------------- */
-float dst (float x1, float x2, float y1, float y2)
-{
-	return (sqrt ( ( (x1-x2)*(x1-x2) )+ ( (y1-y2)*(y1-y2) ) ) );
-}
-
-
-

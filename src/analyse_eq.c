@@ -1,49 +1,21 @@
-//   Program to analyse output from mcmc_eq 
-
-/* *******************************************
-		     mcmc_eq
-	
-	Inversion of travel times to locate earthquakes
-	and derive 1D velocity models using a statistical 
-	Markov chain Monte Carlo method
-	
-	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
-	
-	Copyright (C) 2024
-	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
-
-	Version 2.0	 1. May  2024
-	Version 3.0	 4. July 2024
-
-   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
-   SPDX-License-Identifier: GPL-3.0-only 	
-
-   ******************************************* */
-   
 /*
- *
- * This file is part of the mcmc_eq package.
- *
- * mcmc_eq is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; version GPL-3.0-only.
- *
- * mcmc_eq is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with mcmc_eq; see the file COPYING.  If not, write to
- * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
- *
- */
+     Program to calculate FD traveltimes for shot data (2D)
+     
+     model is defined on arbitrary points 
+     performs delauney triangulation of these points (meshing)
+     and generates FD grid from the mesh
+     
+     Written by Christian Haberland, GFZ Potsdam, July/August 2016
+     
+     uses Triangle routine by J.R Shewchuk and 
+     time_2d routine by Podvin & Lecomte
+     
+     compile:
 
-
-
-// 190624 cleanup, misfit & interpol in common file
-
+ 
+     gcc -O -c mod_grd.c -o mod_grd.o ; gcc -O analyse_plain.c triangle.o mod_grd.o -o analyse_plain -lm 
+     
+*/
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -64,19 +36,11 @@ int TRIA, DR, aflag;
 FILE *finp;
 
 
-int read_mcmcdata (FILE *f, struct DATA *d);
-void write_mcmcdata (struct DATA *d, int ne);
 
-float cal_fit_new (struct Model *m, struct DATA *d, int ne, float **tttp, float **ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, int flag, int eikonal); 
-float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0);
-float dst (float x1, float x2, float y1, float y2);
-void setup_table (struct Model *m, float **ttt, struct GRDHEAD gh, int ps);
-int output_ttt (float **ttt, int nx, int nz, float h);
+
 void read_single_line(FILE *fp, char x[]);
 void copy_model(struct Model *dest, struct Model *src);
-int find_neighbor_cell(struct Model *modx, int n);
 int find_in_cell(struct Model *modx, float x);
-//int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 
 
@@ -88,7 +52,7 @@ void sortn(unsigned long n, float data[])
 	do
 	{
 		flag=0;
-		for (i=1; i<n; i++)
+		for (i=1; i<(long) n; i++)
 		{
 			if (data[i-1]>data[i])
 			{
@@ -110,7 +74,7 @@ long calc_cdf(unsigned long n, float data[], float a[], float b[])
 	inc=1.0/n;
 	a[0]=data[0]; b[0]=inc;
 	j=0;
-	for (i=1; i<n; i++)
+	for (i=1; i< (long) n; i++)
 	{
 		if (data[i]==data[i-1]) b[j]=b[j]+inc;
 		else
@@ -231,33 +195,6 @@ void gsearch(float data[Max_data], long nsamp, float *mean, float *sdev, float d
 //	fprintf(stderr,"m %f s %f\n",m,s);
 }
 
-void map_search(float data[Max_data], long nsamp, float *map)
-{
-	long	i,j,nob,maxb;
-	float	min, max, bin_width, m;
-	int bdata[MB];
-	
-	
-// get min/max
-	min=data[0];
-	max=data[0];
-	for (i=0; i<nsamp; i++) if (data[i]>max) max=data[i];
-	for (i=0; i<nsamp; i++) if (data[i]<min) min=data[i];
-	bin_width=(max-min)/sqrt(nsamp);
-	
-	nob=(int) sqrt(nsamp) +1;
- 	if (nob>MB) {fprintf(stderr,"Number of required bins too large, modify MB and compile\n"); exit(0);}
-	for (i=0; i<nob; i++) bdata[i]=0;
- 	for (i=0; i<nsamp; i++) bdata[(int)((data[i]-min)/bin_width)]++;
-
-	maxb=bdata[i];
-	for (i=0; i<nob; i++) if (bdata[i]>maxb) {maxb=bdata[i];j=i;}
-	m=j*bin_width+min;
-
-	*map=m;
-//	fprintf(stderr,"m %f s %f\n",m,s);
-}
-
 
 void stats(float data[Max_data],float data2[Max_data],int ndata,int *ndata2,float vmin,float vmax,float dv,float *mean,float *sdev,float *mean2,float *sdev2) 
 { 
@@ -328,9 +265,12 @@ int main(int argc, char *argv[])
 
  struct GRDHEAD  gh;			/* FD grid header structure 	*/
  float rms;
+
  char *buf;
  char *c,*c2;
  int l, mcount, ii;
+ int pflag;
+
  float vmin, vmax, dv,  vv, vvx;
  int ndata2;
  float fdummy,xx,yy,zz;
@@ -338,9 +278,8 @@ int main(int argc, char *argv[])
  char   sdummy[1000];
  FILE 		*config_file;		/* config file	*/
 
- char		    line[1024];
+  char		    line[1024];
 
- int    pflag;
  int **hcountp,**hcounts,ndv, ndvpvs;
  double tt,dt,dtp,dts;
  int iip,iis,kkp,kks, noq, eqi, nos, sti;
@@ -350,15 +289,15 @@ int main(int argc, char *argv[])
  float data[Max_data], data2[Max_data];
 
  double eqx[MAX_NOQ], eqy[MAX_NOQ], eqz[MAX_NOQ], seqx[MAX_NOQ], seqy[MAX_NOQ], seqz[MAX_NOQ];
- double eqz2[MAX_NOQ],seqz2[MAX_NOQ],misfit1[MAX_NOQ], misfit2[MAX_NOQ],eqx3[MAX_NOQ], eqy3[MAX_NOQ],eqz3[MAX_NOQ];
+ double eqz2[MAX_NOQ],seqz2[MAX_NOQ],misfit1[MAX_NOQ], misfit2[MAX_NOQ];
  double eqt[MAX_NOQ], eqdt[MAX_NOQ], seqdt[MAX_NOQ];
- double resdtp[MAX_OBS], sresdtp[MAX_OBS];
- double resdts[MAX_OBS], sresdts[MAX_OBS];
+ double resdtp[MAX_STAT], sresdtp[MAX_STAT];
+ double resdts[MAX_STAT], sresdts[MAX_STAT];
  double np0, np1, np2, np3, ns0, ns1, ns2, ns3;
  double snp0, snp1, snp2, snp3, sns0, sns1, sns2, sns3;
 
  float **vs, **vp;
- float **eq_depth, **eq_x, **eq_y;
+ float **eq_depth;
 
 
  float vpvsmin, vpvsmax, dvpvs,z0;
@@ -465,8 +404,6 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
  if (!(vp = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(vs = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(eq_depth = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
- if (!(eq_x = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
- if (!(eq_y = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
 
 // ini model
 
@@ -479,12 +416,13 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
    for (i=0; i<MAX_NOQ; i++) eqt[i]=0.0;
    for (i=0; i<MAX_NOQ; i++) eqdt[i]=0.0;
    for (i=0; i<MAX_NOQ; i++) seqdt[i]=0.0;
-   for (i=0; i<MAX_OBS; i++) resdtp[i]=0.0;
-   for (i=0; i<MAX_OBS; i++) sresdtp[i]=0.0;
-   for (i=0; i<MAX_OBS; i++) resdts[i]=0.0;
-   for (i=0; i<MAX_OBS; i++) sresdts[i]=0.0;
+   for (i=0; i<MAX_STAT; i++) resdtp[i]=0.0;
+   for (i=0; i<MAX_STAT; i++) sresdtp[i]=0.0;
+   for (i=0; i<MAX_STAT; i++) resdts[i]=0.0;
+   for (i=0; i<MAX_STAT; i++) sresdts[i]=0.0;
    np0=0.0; np1=0.0; np2=0.0; np3=0.0; ns0=0.0; ns1=0.0; ns2=0.0; ns3=0.0;
-   snp0=0.0; snp1=0.0; snp2=0.0; snp0=0.0; sns0=0.0; sns1=0.0; sns2=0.0; sns3=0.0;
+   snp0=0.0; snp1=0.0; snp2=0.0; snp3=0.0;
+   sns0=0.0; sns1=0.0; sns2=0.0; sns3=0.0;
 
    noq=0;
    nos=0;
@@ -507,9 +445,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       if (!(vp[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(vs[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(eq_depth[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
-      if (!(eq_x[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
-      if (!(eq_y[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
-
+      
       
       c = strtok (buf, " ");	/* read "mod" */
       c2 = strtok (NULL, " ");	/* read type */
@@ -564,6 +500,8 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       for (i=0; i<gh.nz; i++) 
       {
 	zz=(float)i*gh.h+z0;
+	vv=-99999.9;
+	vvx=-99999.9;
 	if (TRIA==0) 
 	{
 		vv=model.vp[find_in_cell(&model,zz)];
@@ -572,6 +510,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	}
 	if (TRIA==1)
         {
+		sk=0;
 		for (si=0; si<model.dimension-1; si++) if ((zz>=temp_mod.z[si]) && (zz<temp_mod.z[si+1])) sk=si;
 		sa=(temp_mod.vp[sk+1]-temp_mod.vp[sk])/(temp_mod.z[sk+1]-temp_mod.z[sk]);
 		sb=temp_mod.vp[sk]-sa*temp_mod.z[sk];
@@ -583,8 +522,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	if (vv!=vvx) boundary[i]=boundary[i]+1;
 
 // check if value inrange
-	if (vv>vmax) vv=vmax; 
-	if (vv<vmin) vv=vmin;
+	if (vv>vmax) {vv=vmax;}	else {if (vv<vmin) vv=vmin;}
         vp[mcount][i]=vv;
 	j=(int) ((vv-vmin)/dv);
 	hcountp[j][i]=hcountp[j][i]+1;
@@ -592,6 +530,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	if (TRIA==0) vv=model.vpvs[find_in_cell(&model,zz)];
 	if (TRIA==1)
         {
+		sk=0;
 		for (si=0; si<model.dimension-1; si++) if ((zz>=temp_mod.z[si]) && (zz<temp_mod.z[si+1])) sk=si;
 		sa=(temp_mod.vpvs[sk+1]-temp_mod.vpvs[sk])/(temp_mod.z[sk+1]-temp_mod.z[sk]);
 		sb=temp_mod.vpvs[sk]-sa*temp_mod.z[sk];
@@ -599,8 +538,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 	}
 
 // check if value in range
-	if (vv>vpvsmax) vv=vpvsmax; 
-	if (vv<vpvsmin) vv=vpvsmin;
+	if (vv>vpvsmax) {vv=vpvsmax;} else {if (vv<vpvsmin) vv=vpvsmin;}
         vs[mcount][i]=vv;
 	j=(int) ((vv-vpvsmin)/dvpvs);	
 	hcounts[j][i]=hcounts[j][i]+1;
@@ -621,10 +559,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       zz = atof(strtok (NULL, " ")); eqz[eqi]=eqz[eqi]+zz; 
       tt = atof(strtok (NULL, " ")); eqt[eqi]=tt;
       dt = atof(strtok (NULL, " ")); eqdt[eqi]=eqdt[eqi]+dt;       
-      eq_x[mcount-1][eqi]=xx;  
-      eq_y[mcount-1][eqi]=yy;  
-      eq_depth[mcount-1][eqi]=zz;  
-
+      eq_depth[mcount-1][eqi]=zz;           
      }
 // RES
      if (strncmp (buf, "RES", 3)==0)
@@ -741,10 +676,10 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
    sns0=sqrt(sns0/mcount); sns1=sqrt(sns1/mcount); sns2=sqrt(sns2/mcount); sns3=sqrt(sns3/mcount);
 
 // get mean/sdev for EQ z by cdf
-   fprintf(stderr,"analyse quake depth\n");
+   fprintf(stderr,"analyse EQz\n");
    for (i=0; i<noq; i++)
    {
-      fprintf(stderr,"\rEQz depth analysis of EQ %5d of %5d",i,noq-1);
+      fprintf(stderr,"\rdepth analysis of EQ %5d of %5d",i,noq-1);
 
       for (k=0; k<mcount; k++) data[k]=eq_depth[k][i];
       mm=eqz[i]; ss=seqz[i];
@@ -754,26 +689,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       misfit1[i]=mfit1;
       misfit2[i]=mfit2;
    }
-   fprintf(stderr,"\n");
 
-   
-// get MAP for EQ z auto binning Square-root choice
-   for (i=0; i<noq; i++)
-   {
-      fprintf(stderr,"\rMAP depth analysis of EQ %5d of %5d",i,noq-1);
-
-      for (k=0; k<mcount; k++) data[k]=eq_x[k][i];
-      map_search(data,mcount, &mm);
-      eqx3[i]=mm;
-      for (k=0; k<mcount; k++) data[k]=eq_y[k][i];
-      map_search(data,mcount, &mm);
-      eqy3[i]=mm;     
-      for (k=0; k<mcount; k++) data[k]=eq_depth[k][i];
-      map_search(data,mcount, &mm);
-      eqz3[i]=mm;     
-   }
-
-   
 // output
     fprintf(stderr, "\nOutput results for %d models\n",mcount);
 
@@ -800,7 +716,6 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
 
     for (i=0; i<noq; i++) fprintf(stdout, "EZ %4d %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %14.3lf %7.3lf %7.3lf %9.5f\n", i, eqx[i], eqy[i], eqz2[i], seqx[i], seqy[i], seqz2[i],eqt[i],eqdt[i],seqdt[i],misfit2[i]);
     
-    for (i=0; i<noq; i++) fprintf(stdout, "EM %4d %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f %14.3lf %7.3lf %7.3lf %9.5f\n", i, eqx3[i], eqy3[i], eqz3[i], seqx[i], seqy[i], 0.0,eqt[i],eqdt[i],seqdt[i],0.0);
     
     for (i=0; i<nos; i++) fprintf(stdout, "RES %4d %7.3f %7.3f %7.3f %7.3f\n", i,resdtp[i],resdts[i],sresdtp[i],sresdts[i]);
     fprintf(stdout, "NOISE %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f\n", np0, np1, np2, np3, ns0, ns1, ns2, ns3, snp0, snp1, snp2, snp3, sns0, sns1, sns2, sns3);

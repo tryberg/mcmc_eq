@@ -1,47 +1,21 @@
-// Program to calculate P&S traveltimes from Voronoi model
-
-  /* *******************************************
-		     mcmc_eq
-	
-	Inversion of travel times to locate earthquakes
-	and derive 1D velocity models using a statistical 
-	Markov chain Monte Carlo method
-	
-	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
-	
-	Copyright (C) 2024
-	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
-
-	Version 2.0	 1. May  2024
-	Version 3.0	 4. July 2024
-
-   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
-   SPDX-License-Identifier: GPL-3.0-only 	
-
-   ******************************************* */
-   
 /*
- *
- * This file is part of the mcmc_eq package.
- *
- * mcmc_eq is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; version GPL-3.0-only.
- *
- * mcmc_eq is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with mcmc_eq; see the file COPYING.  If not, write to
- * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
- *
- */
-   
-// 190624 cleanup, misfit & interpol in common file
+     Program to calculate FD traveltimes for shot data (2D)
+     
+     model is defined on arbitrary points 
+     performs delauney triangulation of these points (meshing)
+     and generates FD grid from the mesh
+     
+     Written by Christian Haberland, GFZ Potsdam, July/August 2016
+     
+     uses Triangle routine by J.R Shewchuk and 
+     time_2d routine by Podvin & Lecomte
+     
+     compile:
+     cc -DTRILIBRARY -O -c triangle.c 
+     gcc -O -c time_2d.c -o time_2d.o ; gcc -O -c mod_grd.c -o mod_grd.o ;  gcc -O mcmc_2d_tomo.c time_2d.o triangle.o mod_grd.o -o mcmc_2d_tomo -lm 
 
+
+*/
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -57,10 +31,9 @@ int TRIA, DR, aflag;
 FILE *fpin;
 int read_mcmcdata (FILE *f, struct DATA *d);
 void write_mcmcdata (struct DATA *d, int ne);
-float cal_fit_newx (struct Model *m, struct DATA *d, int ne, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
+float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
 float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0);
 float dst (float x1, float x2, float y1, float y2);
-void setup_table (struct Model *m, float **ttt, struct GRDHEAD gh, int ps);
 void setup_table_new (struct Model *m, float ***ttt, struct GRDHEAD gh, int ps);
 int output_ttt (float **ttt, int nx, int nz, float h);
 void read_single_line(FILE *fp, char x[]);
@@ -68,10 +41,6 @@ void copy_model(struct Model *dest, struct Model *src);
 int find_neighbor_cell(struct Model *model, int n);
 int find_in_cell(struct Model *modx, float x);
 void model_to_hsbuf(struct Model *modx, struct GRDHEAD gh, float *hsbuf);
-
-#include "interpol.c"
-#include "misfit.c"
-
 
 // Method to allocate a 2D array of floats
 float*** make_3d_array(int nx, int ny, int nz) {
@@ -182,6 +151,7 @@ unsigned int get_seed (void)
 	return(seed);
 }
 
+#include "forward.c"
 
 // --------------main-------------------------------------------------------------
 
@@ -191,42 +161,57 @@ int main(int argc, char *argv[])
  double old_ll;
  float sdevx, sdevy, sdevz, sdevvp, sdevn;
  float xmin, xmax, ymin, ymax, zmin, zmax, vpmin, vpmax;
+
  float start_vp, sdev_start_vp, start_noise;
+
  float dr_fac;
 
  float noise_min, noise_max;
  double old_misfit, old_rms;
 
+ 
+
  int deci,j_max_start, j_max_main,true_random,topo_flag;
 
+ 
 
+ 
  char		    line[1024], ds[1000];
  char   dstring_start[1000],dstring_main[1000], topo_file_name[1000];
  FILE 		*config_file;		/* config file	*/
+
 // CH
  FILE 		*finp;			/* data file 			*/
 
  struct GRDHEAD  gh;			/* FD grid header structure 	*/
  struct DATA 	*s;		/*  data 			*/
-struct Model old_model;
+
+ 
+ struct Model old_model;
  float mfp0, mfs0, mfp1, mfs1, mfp2, mfs2, mfp3, mfs3;
+
  float sdevxs, sdevys, sdevzs, sdevresidual;
  float residual_min, residual_max;
 
  int n_ppicks,n_spicks, n_ppicks0, n_spicks0, n_ppicks1, n_spicks1, n_ppicks2, n_spicks2, n_ppicks3, n_spicks3, ne;
 
+
+
+
  float 	***tttpr, ***tttsr;		/* travel time (in sec.) table. ttt[source depth km][distance km]  */
+ 
+ 
 
  int nxmod,nos, eikonal;
 
  float start_delay, sdev_start_delay,r_start_eqh,r_start_eqv;
  float df;
- int di,mod_from_file;
+ int di;
  float inv_control;
 
  float vpvsmin, vpvsmax, sdevvpvs, start_vpvs, sdev_start_vpvs;
  float zrmin, zrmax, xtest;
- 
+
  char *buf;
  char *c,*c2;
 
@@ -282,7 +267,7 @@ struct Model old_model;
         read_single_line(config_file, line); sscanf(line, "%d ", &deci);
         read_single_line(config_file, line); sscanf(line, "%d %d", &true_random, &eikonal);
         read_single_line(config_file, line); sscanf(line, "%s %s", dstring_start, dstring_main);
-        read_single_line(config_file, line); sscanf(line, "%d ", &aflag); mod_from_file=0; if (aflag==3) {mod_from_file=1; aflag=0;}
+        read_single_line(config_file, line); sscanf(line, "%d ", &aflag); if (aflag==3) {aflag=0;}
 
         read_single_line(config_file, line); sscanf(line, "%d %s %d ", &topo_flag, topo_file_name, &topo_shift);
         read_single_line(config_file, line); sscanf(line, "%f %f ", &start_vp, &sdev_start_vp); 
@@ -467,8 +452,8 @@ struct Model old_model;
   
  fprintf(stderr,"Start misfit calc\n");
 
- old_misfit = cal_fit_newx(&old_model, s, ne, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,1);
-
+ old_misfit = cal_fit_newx(&old_model, s, tttpr, tttsr, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal,1);
+// old_misfit = cal_fit_new(&old_model, s, ne, tttp, ttts, gh, 3, &mfp0,&mfs0,&mfp1,&mfs1, &mfp2, &mfs2, &mfp3, &mfs3, aflag, eikonal);
 // for (ix=0; ix<gh.nz; ix++) for (jx=0; jx<nxmod; jx++) {tttp_old[ix][jx]=tttp[ix][jx]; ttts_old[ix][jx]=ttts[ix][jx];}
 
 // fprintf(stderr,"XXX %f %f %d\n",mfp0+mfp1+mfp2+mfp3, mfs0+mfs1+mfs2+mfs3,n_ppicks+n_spicks );
@@ -487,7 +472,6 @@ struct Model old_model;
  fclose(fpin);
  exit(0);
 }
-
 
 /* ============================================= */
 int read_mcmcdata (FILE *f, struct DATA *d)
@@ -513,12 +497,14 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 			
 		if (strchr(buffer, '#')==NULL)
 		{
-
+			if (i==MAX_NOQ) {fprintf(stderr, "number of quakes to large! MAX_NOQ in mc.h!\n"); exit(0);}
 			memset (ph, '\0', 2);
 			sscanf(buffer, "%s %d %s %f %f %f %lf %d\n", 
 				dum, &st_id, ph, &x, &y, &z, &t, &cl);
 			if (strchr(ph,'P')!=NULL)
 			{
+				if (np==MAX_OBS) {fprintf(stderr, "number of picks to large! MAX_OBS in mc.h!\n"); exit(0);}
+				if (st_id>=MAX_STAT) {fprintf(stderr, "number of stations to large! MAX_STAT in mc.h!\n"); exit(0);}
 				d[i].p_picks[np].st_id = st_id;
 				d[i].p_picks[np].x = x;
 				d[i].p_picks[np].y = y;
@@ -529,10 +515,13 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 				if (cl==1) d[i].nobs_p1=d[i].nobs_p1+1;
 				if (cl==2) d[i].nobs_p2=d[i].nobs_p2+1;
 				if (cl==3) d[i].nobs_p3=d[i].nobs_p3+1;
+				if (cl>3) {fprintf(stderr, "pick class to large! modify source code!\n"); exit(0);}
 				np++;
 			}
 			else
 			{
+				if (ns==MAX_OBS) {fprintf(stderr, "number of picks to large! MAX_OBS in mc.h!\n"); exit(0);}
+				if (st_id>=MAX_STAT) {fprintf(stderr, "number of stations to large! MAX_STAT in mc.h!\n"); exit(0);}
 				d[i].s_picks[ns].st_id = st_id;
 				d[i].s_picks[ns].x = x;
 				d[i].s_picks[ns].y = y;
@@ -543,6 +532,7 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 				if (cl==1) d[i].nobs_s1=d[i].nobs_s1+1;
 				if (cl==2) d[i].nobs_s2=d[i].nobs_s2+1;
 				if (cl==3) d[i].nobs_s3=d[i].nobs_s3+1;
+				if (cl>3) {fprintf(stderr, "pick class to large! modify source code!\n"); exit(0);}
 				ns++;
 			}
 			k++;
@@ -552,9 +542,15 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 			if (j!=0) i++;
 			d[i].nobs_p0=0; d[i].nobs_p1=0; d[i].nobs_p2=0; d[i].nobs_p3=0;
 			d[i].nobs_s0=0; d[i].nobs_s1=0; d[i].nobs_s2=0; d[i].nobs_s3=0;
+			d[i].xfix=-9999.0;
+			d[i].yfix=-9999.0;
+			d[i].zfix=-9999.0;
+
 //			fprintf(stderr, "EVENT %d\n", i);
-			sscanf(buffer, "%s %d %d %d %lf", dum, &d[i].eq_id,
-					 &d[i].nobs_p, &d[i].nobs_s, &d[i].reftime);
+			sscanf(buffer, "%s %d %d %d %lf %lf %lf %lf", dum, &d[i].eq_id,
+					 &d[i].nobs_p, &d[i].nobs_s, &d[i].reftime, &d[i].xfix, &d[i].yfix, &d[i].zfix);
+//			fprintf(stderr, "EVENT %d eqx = %f eqy = %f eqz = %lf\n", i, d[i].xfix, d[i].yfix, d[i].zfix);
+
 			k=0;
 			np=0; ns=0;
 		}
@@ -565,8 +561,4 @@ int read_mcmcdata (FILE *f, struct DATA *d)
 	return(ne);
 }
 
-/* -------------------------------------------------------------------- */
-float dst (float x1, float x2, float y1, float y2)
-{
-	return (sqrt ( ( (x1-x2)*(x1-x2) )+ ( (y1-y2)*(y1-y2) ) ) );
-}
+
