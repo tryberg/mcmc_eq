@@ -1,18 +1,46 @@
+// Program to calculate P&S traveltimes from Voronoi model
+
+  /* *******************************************
+		     mcmc_eq
+	
+	Inversion of travel times to locate earthquakes
+	and derive 1D velocity models using a statistical 
+	Markov chain Monte Carlo method
+	
+	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
+	
+	Copyright (C) 2024
+	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
+
+	Version 2.0	 1. May  2024
+	Version 3.0	 4. July 2024
+
+   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+   SPDX-License-Identifier: GPL-3.0-only 	
+
+   ******************************************* */
+   
 /*
-     Program to calculate FD traveltimes for shot data (2D)
-     
-     model is defined on arbitrary points 
-     performs delauney triangulation of these points (meshing)
-     and generates FD grid from the mesh
-     
-     Written by Christian Haberland, GFZ Potsdam, July/August 2016
-     
-     uses Triangle routine by J.R Shewchuk and 
-     time_2d routine by Podvin & Lecomte
-     
-     compile:
-     cc -DTRILIBRARY -O -c triangle.c 
-     gcc -O -c time_2d.c -o time_2d.o ; gcc -O -c mod_grd.c -o mod_grd.o ;  gcc -O mcmc_2d_tomo.c time_2d.o triangle.o mod_grd.o -o mcmc_2d_tomo -lm 
+ *
+ * This file is part of the mcmc_eq package.
+ *
+ * mcmc_eq is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; version GPL-3.0-only.
+ *
+ * mcmc_eq is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with mcmc_eq; see the file COPYING.  If not, write to
+ * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
+ * MA 02111-1307, USA.
+ *
+ */
+   
+// 190624 cleanup, misfit & interpol in common file
 
 
 */

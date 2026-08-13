@@ -1,18 +1,44 @@
+// Program to invert P & S picks for location & structure by MCMC
+
+/* *******************************************
+		     mcmc_eq
+	
+	Inversion of travel times to locate earthquakes
+	and derive 1D velocity models using a statistical 
+	Markov chain Monte Carlo method
+	
+	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
+	
+	Copyright (C) 2024
+	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
+
+	Version 2.0	 1. May  2024
+	Version 3.0	 4. July 2024
+
+   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+   SPDX-License-Identifier: GPL-3.0-only 	
+
+   ******************************************* */
+   
 /*
-     Program to calculate FD traveltimes for shot data (2D)
-     
-     model is defined on arbitrary points 
-     performs delauney triangulation of these points (meshing)
-     and generates FD grid from the mesh
-     
-     Written by Christian Haberland, GFZ Potsdam, July/August 2016
-     
-     uses Triangle routine by J.R Shewchuk and 
-     time_2d routine by Podvin & Lecomte
-     
-     compile:
-     cc -DTRILIBRARY -O -c triangle.c 
-     gcc -O -c time_2d.c -o time_2d.o ; gcc -O -c mod_grd.c -o mod_grd.o ;  gcc -O mcmc_2d_tomo.c time_2d.o triangle.o mod_grd.o -o mcmc_2d_tomo -lm 
+ *
+ * This file is part of the mcmc_eq package.
+ *
+ * mcmc_eq is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; version GPL-3.0-only.
+ *
+ * mcmc_eq is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with mcmc_eq; see the file COPYING.  If not, write to
+ * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
+ * MA 02111-1307, USA.
+ *
+ */
 
 
 */
@@ -21,6 +47,7 @@
 // no priors, no weights
 // fixed P, S & P/S station corrections
 // 191023 modification for compiler
+// 190624 cleanup, misfit & interpol in common file
 
 #include <stdio.h>
 #include <math.h>
@@ -40,6 +67,7 @@ void write_mcmcdata (struct DATA *d, int ne);
 float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttts, struct GRDHEAD gh, int calct, float *mfp0, float *mfs0, float *mfp1, float *mfs1, float *mfp2, float *mfs2, float *mfp3, float *mfs3,  int flag, int eikonal, int out); 
 float traveltimet (float **ttt, int nx, int ny, int nz, float h, float dist, float z, float z0);
 float dst (float x1, float x2, float y1, float y2);
+
 void setup_table_new (struct Model *m, float ***ttt, struct GRDHEAD gh, int ps);
 void read_single_line(FILE *fp, char x[]);
 void copy_model(struct Model *dest, struct Model *src);
@@ -875,9 +903,13 @@ fprintf(stderr,"reading noise \n");
     index=rand_eq_int(new_model.nos);
     dx=rand_gauss_bounded(new_model.pres[index], sdevresidual, residual_min,residual_max);
     dy=rand_gauss_bounded(new_model.sres[index], sdevresidual, residual_min,residual_max);
-    
+
+// for P or S station corrections only
+    if (scor_flag==-1) dy=0.0; // P statcor only
+    if (scor_flag==-2) dx=0.0; // S statcor only
+	
 // no reference station -> zero mean <delay>==0 for P & S
-    if (scor_flag==0)
+    if ((scor_flag==0) || (scor_flag==-1) || (scor_flag==-2))
     {
 	new_model.pres[index]=new_model.pres[index]+dx;
 	new_model.sres[index]=new_model.sres[index]+dy;

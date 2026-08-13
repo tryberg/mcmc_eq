@@ -1,16 +1,44 @@
+//   Program to analyse output from mcmc_eq 
+
+/* *******************************************
+		     mcmc_eq
+	
+	Inversion of travel times to locate earthquakes
+	and derive 1D velocity models using a statistical 
+	Markov chain Monte Carlo method
+	
+	Trond Ryberg, Christian Haberland & Jeremy D. Pesicek
+	
+	Copyright (C) 2024
+	- Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences 
+
+	Version 2.0	 1. May  2024
+	Version 3.0	 4. July 2024
+
+   SPDX-FileCopyrightText: 2024 Helmholtz Centre Potsdam - GFZ German Research Centre for Geosciences
+   SPDX-License-Identifier: GPL-3.0-only 	
+
+   ******************************************* */
+   
 /*
-     Program to calculate FD traveltimes for shot data (2D)
-     
-     model is defined on arbitrary points 
-     performs delauney triangulation of these points (meshing)
-     and generates FD grid from the mesh
-     
-     Written by Christian Haberland, GFZ Potsdam, July/August 2016
-     
-     uses Triangle routine by J.R Shewchuk and 
-     time_2d routine by Podvin & Lecomte
-     
-     compile:
+ *
+ * This file is part of the mcmc_eq package.
+ *
+ * mcmc_eq is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; version GPL-3.0-only.
+ *
+ * mcmc_eq is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with mcmc_eq; see the file COPYING.  If not, write to
+ * the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
+ * MA 02111-1307, USA.
+ *
+ */
 
  
      gcc -O -c mod_grd.c -o mod_grd.o ; gcc -O analyse_plain.c triangle.o mod_grd.o -o analyse_plain -lm 
@@ -404,6 +432,8 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
  if (!(vp = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(vs = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
  if (!(eq_depth = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+ if (!(eq_x = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+ if (!(eq_y = malloc(sizeof(float *) * Max_data))) {fprintf(stderr, "malloc failed\n"); exit(0);}
 
 // ini model
 
@@ -445,7 +475,9 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       if (!(vp[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(vs[mcount] = malloc(sizeof(float *) * gh.nz))) {fprintf(stderr, "malloc failed\n"); exit(0);}
       if (!(eq_depth[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
-      
+      if (!(eq_x[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+      if (!(eq_y[mcount] = malloc(sizeof(float *) * MAX_NOQ))) {fprintf(stderr, "malloc failed\n"); exit(0);}
+
       
       c = strtok (buf, " ");	/* read "mod" */
       c2 = strtok (NULL, " ");	/* read type */
@@ -559,7 +591,10 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       zz = atof(strtok (NULL, " ")); eqz[eqi]=eqz[eqi]+zz; 
       tt = atof(strtok (NULL, " ")); eqt[eqi]=tt;
       dt = atof(strtok (NULL, " ")); eqdt[eqi]=eqdt[eqi]+dt;       
-      eq_depth[mcount-1][eqi]=zz;           
+      eq_x[mcount-1][eqi]=xx;  
+      eq_y[mcount-1][eqi]=yy;  
+      eq_depth[mcount-1][eqi]=zz;  
+
      }
 // RES
      if (strncmp (buf, "RES", 3)==0)
@@ -676,10 +711,10 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
    sns0=sqrt(sns0/mcount); sns1=sqrt(sns1/mcount); sns2=sqrt(sns2/mcount); sns3=sqrt(sns3/mcount);
 
 // get mean/sdev for EQ z by cdf
-   fprintf(stderr,"analyse EQz\n");
+   fprintf(stderr,"analyse quake depth\n");
    for (i=0; i<noq; i++)
    {
-      fprintf(stderr,"\rdepth analysis of EQ %5d of %5d",i,noq-1);
+      fprintf(stderr,"\rEQz depth analysis of EQ %5d of %5d",i,noq-1);
 
       for (k=0; k<mcount; k++) data[k]=eq_depth[k][i];
       mm=eqz[i]; ss=seqz[i];
@@ -689,6 +724,7 @@ fprintf(stderr, "%f %f TRIA %d\n",vpvsmin, vpvsmax, TRIA);
       misfit1[i]=mfit1;
       misfit2[i]=mfit2;
    }
+   fprintf(stderr,"\n");
 
 // output
     fprintf(stderr, "\nOutput results for %d models\n",mcount);
