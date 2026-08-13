@@ -41,8 +41,6 @@
  */
 
 
-*/
-
 // don't use TRIA
 // no priors, no weights
 // fixed P, S & P/S station corrections

@@ -43,7 +43,6 @@
 // 190624 cleanup, misfit & interpol in common file
 
 
-*/
 #include <stdio.h>
 #include <math.h>
 #include <time.h>

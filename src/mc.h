@@ -106,6 +106,7 @@ struct OBS			/* receiver/observation struct 	*/
 	float y;		/* y-coord (km) 		*/
 	float z;		/* z-coord (km) 		*/
 	float t;		/* travel time (s) 		*/
+	float t_pred;		// predicted travel time (s) 	
 	int cl;			/* pick class 			*/
 	int layer;		// layer number
 	float w1;		// pre-calculated weight1

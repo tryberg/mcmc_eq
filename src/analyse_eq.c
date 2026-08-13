@@ -40,10 +40,6 @@
  *
  */
 
- 
-     gcc -O -c mod_grd.c -o mod_grd.o ; gcc -O analyse_plain.c triangle.o mod_grd.o -o analyse_plain -lm 
-     
-*/
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -325,7 +321,7 @@ int main(int argc, char *argv[])
  double snp0, snp1, snp2, snp3, sns0, sns1, sns2, sns3;
 
  float **vs, **vp;
- float **eq_depth;
+ float **eq_depth, **eq_x, **eq_y;
 
 
  float vpvsmin, vpvsmax, dvpvs,z0;
