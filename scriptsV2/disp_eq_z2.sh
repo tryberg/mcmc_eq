@@ -77,8 +77,8 @@ awk '{if (($3>(1*"'$bi'")) && ($4=="'"$eqn"'")) print $0}' tmpx | grep EQ > t77
 
 dx=`echo $d | awk '{print $1+$1*0.25}'`
 dy=$dx
-dz=$dx
-echo "grid increment: $dx"
+dz=`echo $dx | awk '{print $1*2}'`
+echo "x grid increment: $dx"
 # x-y
 gmt psbasemap -JX6 -R"$x0/$x1/$y0/$y1" -BNWes -Bxaf+l"X [km]" -Byaf+l"Y [km]" -K -P -Y4.5 > "${output}"
 
@@ -94,7 +94,17 @@ gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
 awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $4}' "$f" | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m >> "$output"
 awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $4, $6, $7}' "$f" | gmt psxy -JX -R -Sc0.03 -Gblue -Exy0.01 -K -O -m >> "$output"
 
+awk '{print $6}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "X mean location = $m, std = $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i >> "$output"
+awk '{print $7}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Y mean location = $m, std = $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.3i >> "$output"
+
 # x-z
+echo "z grid increment: $dz"
 gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -BSWen -Bxaf+l"X [km]" -Byaf+l"Z [km]" -K -P -Y-3 -O >> "${output}"
 
 awk '{print $6, $8-"'"$z0"'"}' t77 | awk '{print int($1/"'"$dx"'"), int($2/"'"$dy"'")}' | sort -n | \
@@ -108,6 +118,10 @@ gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
 awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Glightblue -K -O -m >> "$output"
 awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.05 -Gblue -Exy0.01 -K -O -m >> "$output"
 
+awk '{print $8}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Z mean location = $m, std = $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i >> "$output"
 #awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
 #awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.05 -Gred -K -O -m >> "$output"
 
