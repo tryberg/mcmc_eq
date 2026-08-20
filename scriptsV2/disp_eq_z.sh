@@ -90,10 +90,19 @@ for eqn in $eqn0; do
     gmt grd2cpt -Chot -Z -D tmpxy.grd > tmp.cpt
 
     gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $4}' "$f" | \
-    gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m >> "$output"
+#    awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $4}' "$f" | \
+#    gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m >> "$output"
     awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $4, $6, $7}' "$f" | \
-    gmt psxy -JX -R -Sc0.03 -Gblue -Exy0.01 -K -O -m >> "$output"
+    gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
+
+awk '{print $6}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "X = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i -Gwhite >> "$output"
+awk '{print $7}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Y = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.3i -Gwhite >> "$output"
 
     # x-z
     gmt psbasemap -JX5/-5 -R$xz -B2f1:"X [km] EQ $eqn":/2f1:"Z [km]":SwEn -K -Y-5.0 -O >> "$output"
@@ -106,15 +115,15 @@ for eqn in $eqn0; do
 
     gmt grd2cpt -Chot -Z -D tmpxy.grd > tmp.cpt
     gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.05 -Gblue -Exy0.01 -K -O -m >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.05 -Ggreen -Exy0.01 -K -O -m >> "$output"
-    
-    awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
-    awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.05 -Gred -K -O -m >> "$output"
+    awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
+    awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Ggreen -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
     
     echo "$x0" "$x1" "$z0" | awk '{print $1, $3; print $2, $3; print ">" }' | gmt psxy -JX -R -W -K -O -m >> "$output"
+
+awk '{print $8}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Z = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i -Gwhite >> "$output"
     
     echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> "$output"
     mv "$output" "loc_eq${eqn}.ps"
