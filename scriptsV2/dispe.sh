@@ -22,7 +22,16 @@ ls "$cfg"
 
 eq=$(awk 'NR==30 {print $1}' "$cfg")
 v2=$(awk 'NR==30 {print $2}' "$cfg")
-bi=$(echo "$v2 $eq" | awk '{print ($1+$2)-$2}')
+
+if [ "$#" -eq 0 ]; then
+  df=25000 # default: df less than total, assumed stationary
+  bi=$(echo "$v2 $eq $df" | awk '{print ($1+$2)-$3}')
+  echo "bi assumed to be $bi, 25000 less than total"
+else
+  bi=$1
+  echo "bi is $bi"
+fi
+
 deci=$(awk 'NR==31 {print $1}' "$cfg")
 
 touch tmp; rm tmp; touch tmp
@@ -70,7 +79,7 @@ gmt makecpt -Chot -Z -T0/$zmax/1 -D > tmp.cpt
 gmt grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
 echo "$eq $lymin $eq $lymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B -W -K -O >> evo.ps
 echo "$bi $lymin $bi $lymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B -W -K -O >> evo.ps
-gmt psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -Baf:"evaluated models":/2f3:"Misfit [s]":nSW -K -O >> evo.ps
+gmt psbasemap -JX5/3l -R$xmin/$xmax/$ymin/$ymax -Bxaf+l"evaluated models" -Bya2f3+l"Misfit [s]" -BnSW -K -O >> evo.ps
 
 gmt psbasemap -JX-1/3l -R0/1/$ymin/$ymax -B0/2f3nSEw -K -O -X5 >> evo.ps
 
@@ -97,9 +106,9 @@ gmt grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
 echo "$eq $ymin $eq $ymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B0 -W -K -O  >> evo.ps
 echo "$bi $ymin $bi $ymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B0 -W -K -O  >> evo.ps
 
-gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -B50000f10000:"evaluated models":/10f5:"Dim":nSW -K -O >> evo.ps
+gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -Bxaf+l"evaluated models" -Bya+l"Dim" -BnSW -K -O >> evo.ps
 
-gmt psbasemap -JX-1/2 -R0/1/$ymin/$ymax -B0/10f5nSEw -K -O -X5 >> evo.ps
+gmt psbasemap -JX-1/2 -R0/1/$ymin/$ymax -Bx0 -Bya -BnSEw -K -O -X5 >> evo.ps
 
 max=$(sort -n -k 2 dalleq.dat | tail -1 | awk '{print $2}')
 awk -v max="$max" '{print $2/max, $1}' dalleq.dat | gmt psxy -JX -R -K -O -Gblack -L >> evo.ps

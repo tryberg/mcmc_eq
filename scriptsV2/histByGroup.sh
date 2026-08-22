@@ -65,7 +65,7 @@ nPages=$(( (nGroups + maxPerPage - 1) / maxPerPage ))
 echo "Found $nGroups groups -> $nPages page(s)"
 
 binWidth=0.002 #synthetics
-#binWidth=0.05
+binWidth=0.05
 
 # ---- Compute a shared X range across ALL groups (columns 6 AND 7) ----
 read xmin xmax <<< $(awk '{print $6"\n"$7}' "$infile" | sort -n | awk '

@@ -90,6 +90,7 @@ bw=0.0005
 ymax=`egrep mod tmpx | awk '{print $6}' | gmt pshistogram -T$bw -I -o3 | gmt info -I10 -C -o1`
 egrep mod tmpx | awk '{print $6,$7,$8,$9,$10,$11,$12,$13}' > t3
 xmax=`awk '{for(i=1;i<=NF;i++){v=($i<0)?-$i:$i; if(v>m)m=v}} END{print m}' t3 | gmt info -C -I0.2 -o1`
+xmax=$(awk -v a="$xmax" -v b="1.5" 'BEGIN{print (a<b)?a:b}')
 
 gmt psbasemap -JX2/2 -R0.0/$xmax/0/$ymax -Bxa+l"Data noise [s]" -Bya -BSwen -K -O -X2.35 >> $out.ps
 

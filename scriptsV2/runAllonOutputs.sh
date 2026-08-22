@@ -1,15 +1,16 @@
 #!/bin/bash
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <bi>"
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <bi> <prms>"
     exit 1
 fi
 # evaluated models threshold:
 emt=$1
+prms=$2
 
 # run all post processing scripts at once with defaults:
-dispe.sh
-disp_m_average_sl.sh $emt 100 0
+dispe.sh $emt
+disp_m_average_sl.sh $emt $prms 0
 disp_eq.sh picks.mcmc
 
 # optionally
