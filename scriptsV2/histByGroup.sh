@@ -191,11 +191,11 @@ for (( p=0; p<nPages; p++ )); do
 		  psyncsc=`grep $staLabel $synStaCorFile | awk '{print $5}'`	
 		  echo "$psyncsc 0" > ptmp
 		  echo "$psyncsc $ymax" >> ptmp
-		  gmt psxy ptmp -JX?/? -R$sharedR -W0.5p,grey
+		  gmt psxy ptmp -JX?/? -R$sharedR -W0.5p,grey,..
 		  ssyncsc=`grep $staLabel $synStaCorFile | awk '{print $6}'`	
 		  echo "$ssyncsc 0" > stmp
 		  echo "$ssyncsc $ymax" >> stmp
-		  gmt psxy stmp -W0.5p,steelblue
+		  gmt psxy stmp -W0.5p,steelblue,..
 		fi
 
                 # Column 7 plotted first (background layer), fully opaque

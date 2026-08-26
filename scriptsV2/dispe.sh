@@ -118,6 +118,7 @@ awk -v max="$max" '{print $2/max, $1}' dallpbibf.dat | gmt psxy -JX -R -K -O -Gr
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> evo.ps
 rm dall*dat mall*dat tmp*
 
+test -f evo.png && cp evo.png evo0.png
 gmt psconvert -Tg evo.ps -A
 ls "$PWD/evo.ps"
 ls "$PWD/evo.png"

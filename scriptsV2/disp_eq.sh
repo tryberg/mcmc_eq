@@ -58,11 +58,6 @@ egrep EZ "$res" > resmcna.tmp
 gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -Bxaf+l"X [km]" -Byaf+l"Y [km]" -BNWse -K -X0.7 -Y2.9 > eq.ps
 
 paste t1 rec.dat > recdata
-stac=staCors_mcmc.dat
-awk '{print $4,$2,$3}' recdata > "$stac"
-echo "station corrections saved:"
-ls "$PWD/$stac"
-
 awk '{print $6, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O >> eq.ps
 awk '{if ($2>0) print $6, $7, $2*0.8}' recdata | gmt psxy -JX -R -Sc -K -O >> eq.ps
 awk '{if ($2<0) print $6, $7, -$2*0.8}' recdata | gmt psxy -JX -R -Sx  -K -O >> eq.ps
@@ -112,12 +107,5 @@ gmt psconvert -Tg eq.ps -A
 ls $PWD/eq.ps 
 ls $PWD/eq.png
 [[ "$(uname)" == "Darwin" ]] && open eq.png
-
-# output new catalog: {'X','Y','Z','OT','dOT','ex','ey','ez'}
-cat="quakes_mcmc.dat"
-echo "# {'X','Y','Z','OT','dOT','ex','ey','ez'} (%8.3f %8.3f %8.3f %015.3f %7.3f %f %f %f\n)" > "$cat"
-awk '{printf "%8.3f %8.3f %8.3f %015.3f %7.3f %f %f %f\n",$3,$4,$5,$9,$10,$6,$7,$8}' resmcna.tmp >> "$cat"
-echo "new output catalog saved:"
-ls "$PWD/$cat"
 
 rm t1 rec.dat resmcna.tmp
