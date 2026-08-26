@@ -86,47 +86,48 @@ s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt
 echo -$xmax $ymax  "m/s="$m"+-"$s" s" | gmt pstext -JX -R -K -O -N -F+jTL -D0.1c/-0.1c -Gwhite >> $out.ps
 
 echo data noise
-bw=0.0005
+bw=0.0010
 ymax=`egrep mod tmpx | awk '{print $6}' | gmt pshistogram -T$bw -I -o3 | gmt info -I10 -C -o1`
 egrep mod tmpx | awk '{print $6,$7,$8,$9,$10,$11,$12,$13}' > t3
-xmax=`awk '{for(i=1;i<=NF;i++){v=($i<0)?-$i:$i; if(v>m)m=v}} END{print m}' t3 | gmt info -C -I0.2 -o1`
-xmax=$(awk -v a="$xmax" -v b="1.5" 'BEGIN{print (a<b)?a:b}')
+#xmax=`awk '{for(i=1;i<=NF;i++){v=($i<0)?-$i:$i; if(v>m)m=v}} END{print m}' t3 | gmt info -C -I0.2 -o1`
+#xmax=$(awk -v a="$xmax" -v b="1.0" 'BEGIN{print (a<b)?a:b}')
+xmax=`gmt info t3 -C -i4 -I.25 -o1` # max range of s-wave qual 0 column
 
-gmt psbasemap -JX2/2 -R0.0/$xmax/0/$ymax -Bxa+l"Data noise [s]" -Bya -BSwen -K -O -X2.35 >> $out.ps
+gmt psbasemap -JX2/2 -R0.0/$xmax/0/$ymax -Bxa+l"Data noise [s]" -Byaf -Bxaf -BSwen -K -O -X2.35 >> $out.ps
 
 # true values
-echo 0.025 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
-echo 0.050 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
-echo 0.075 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
-echo 0.100 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
-
-echo 0.0875 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
-echo 0.1125 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
-echo 0.1375 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
-echo 0.1625 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
+#echo 0.025 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
+#echo 0.050 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
+#echo 0.075 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
+#echo 0.100 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,200/200/255 -O -K -N >> $out.ps
+#
+#echo 0.0875 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
+#echo 0.1125 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
+#echo 0.1375 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
+#echo 0.1625 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
 
 echo "start noise"
-s=$(egrep mod tmpx | awk '{print $6}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,0/0/255,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $7}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,42/42/255,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $8}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,85/85/255,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $9}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,128/128/255,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $6}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,0/0/255,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $7}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,42/42/255,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $8}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,85/85/255,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $9}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,128/128/255,dotted -O -K -N >> $out.ps
 egrep mod tmpx | awk '{print $6}' | gmt pshistogram -JX -R -T$bw -Z0 -G0/0/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $7}' | gmt pshistogram -JX -R -T$bw -Z0 -G42/42/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -T$bw -Z0 -G85/85/255 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -T$bw -Z0 -G128/128/255 -K -O -F -V >> $out.ps
 
-s=$(egrep mod tmpx | awk '{print $10}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/0/0,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $11}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/42/42,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $12}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/85/85,dotted -O -K -N >> $out.ps
-s=$(egrep mod tmpx | awk '{print $13}' | gmt math STDIN MEAN = /dev/stdout | head -1)
-echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/128/128,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $10}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/0/0,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $11}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/42/42,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $12}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/85/85,dotted -O -K -N >> $out.ps
+#s=$(egrep mod tmpx | awk '{print $13}' | gmt math STDIN MEAN = /dev/stdout | head -1)
+#echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/128/128,dotted -O -K -N >> $out.ps
 egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/0/0 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/42/42 -K -O -F -V >> $out.ps
 egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/85/85 -K -O -F -V >> $out.ps
