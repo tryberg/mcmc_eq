@@ -79,6 +79,7 @@ xmax=`awk '{for(i=6;i<=NF;i++){v=($i<0)?-$i:$i; if(v>m)m=v}} END{print m}' $infi
 #xmax=$(awk -v a="$xmax" -v b="1" 'BEGIN{print (a<b)?a:b}') # use reasonable max if less than 1, otherwise 1
 xmin=-${xmax}
 echo "Shared X range: $xmin to $xmax"
+test "$xmin" == "-" && exit
 
 # ---- Compute a shared Y range (max bin count) across ALL groups and BOTH columns (6 and 7) ----
 # Done with pure awk (no gmt call) to avoid invoking the histogram module

@@ -643,20 +643,30 @@ for (i=0; i<MAX_STAT; i++) old_model.sres[i]=-99999;
 //            ^      ^                                       ^               ^
      if (check_string(inp_model_switch,'V')==1)
      {
-fprintf(stderr,"reading velocity model \n");
-
+        fprintf(stderr,"reading velocity model \n");
         i=0;
- 	while (!feof(fmodel))
-  	{
-        	read_single_line(fmodel, line); sscanf(line, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", &sd[0], &f1, &df, &df, &df, &df, &f2, &df, &f3, &df, &df, &df, &df); 
+        while (!feof(fmodel))
+        {
+                read_single_line(fmodel, line); sscanf(line, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", &sd[0], &f1, &df, &df, &df, &df, &f2, &df, &f3, &df, &df, &df, &df);
                 if (strcmp(sd, "STAN") == 0) {old_model.z[i]=f1; old_model.vp[i]=f2; old_model.vpvs[i]=f3; i=i+1;}
-		if (i>max_dim) {fprintf(stderr, "model larger than reserved space, increase 'max # of cells/layers' in config file\n"); exit (0);}
-  	}
-	old_model.dimension=i;
+                if (i>max_dim) {fprintf(stderr, "model larger than reserved space, increase 'max # of cells/layers' in config file\n"); exit (0);}
+        }
+        old_model.dimension=i;
 
-	fseek(fmodel, 0, SEEK_SET);
+        /* check that the model file has exactly nz layers as required by the config */
+        if (old_model.dimension < 1)
+        {
+                fprintf(stderr, "Error: model.dat is empty or contains no valid 'STAN' lines - check the file format\n");
+                exit(1);
+        }
+        if (old_model.dimension != gh.nz)
+        {
+                fprintf(stderr, "Error: model.dat has %d layer(s), but config specifies nz = %d - these must match exactly\n", old_model.dimension, gh.nz);
+                exit(1);
+        }
+
+        fseek(fmodel, 0, SEEK_SET);
      }
-
      
 // Quakes
 // EQ    1   326.616   -63.163    10.448     0.635     0.881     8.944 1482436219.310  -2.440   1.780   0.75318

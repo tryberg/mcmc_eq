@@ -178,7 +178,7 @@ awk '{if ($1=="STAN") print $7+$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v
 # Vp/Vs
 gmt psbasemap -JX1.2/-5 -R1.501/2/-5/32 -B0.2f0.1:"Vp/Vs":/10f5g1000:"Depth [km]":SwEn -K -O -X1.35  >> $out.ps
 test -f model.inp && awk '{print $3,$1}' model.inp | gmt psxy -JX -R -W1,magenta -K -O >> $out.ps
-test -f model2.inp && awk '{print $2/$3, $1}' model2.inp | gmt psxy -JX -R -W1,magenta,.. -K -O >> $out.ps
+test -f model2.inp && awk '{print $3,$1}' model2.inp | gmt psxy -JX -R -W1,magenta,.. -K -O >> $out.ps
 
 awk '{if ($1=="STAN") print $9, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K  >> $out.ps
 awk '{if ($1=="STAN") print $9-$10, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K  >> $out.ps
