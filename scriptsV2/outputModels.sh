@@ -9,7 +9,7 @@ test -f $inp || exit
 
 # P-wave models: classic mean
 awk '{if ($1=="STAN") print $3, $2}' $inp |\
- awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_p.mod
+ awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > classicAvg_p.mod
 
 # P-wave std model 1: classic mean
 awk '{if ($1=="STAN") print $3-$4, $2}' $inp |\
@@ -21,7 +21,7 @@ awk '{if ($1=="STAN") print $3+$4, $2}' $inp |\
 
 # P-wave models: excess mean
 awk '{if ($1=="STAN") print $7, $2}' $inp |\
- awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_p2.mod
+ awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_p.mod
 
 # P-wave std model 1: excess mean
 awk '{if ($1=="STAN") print $7-$8, $2}' $inp |\
@@ -31,10 +31,6 @@ awk '{if ($1=="STAN") print $7-$8, $2}' $inp |\
 awk '{if ($1=="STAN") print $7+$8, $2}' $inp |\
  awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > sd2_p2.mod
 
-
-#awk '{if ($1=="STAN") print $3, $2}' resmcns.dat |\
-# awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > min_p.mod
-
 awk '{if ($1=="STAN") print $11, $2}' $inp |\
  awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > maxProb_p.mod
 
@@ -42,7 +38,7 @@ ls *p.mod
 ############ S-wave
 # S-wave models: classic mean
 awk '{if ($1=="STAN") print $3/$5, $2}' $inp  |\
- awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_s.mod
+ awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > classicAvg_s.mod
 
 # S-wave std model 1: classic mean
 awk '{if ($1=="STAN") {f=$3/$5; x1=$4/$3; x2=$6/$5; df=f*sqrt(x1*x1+x2*x2); print f+df, $2}}' $inp |\
@@ -54,7 +50,7 @@ awk '{if ($1=="STAN") {f=$3/$5; x1=$4/$3; x2=$6/$5; df=f*sqrt(x1*x1+x2*x2); prin
 
 # S-wave models: excess mean
 awk '{if ($1=="STAN") print $7/$9, $2}' $inp  |\
- awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_s2mod
+ awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > newAvg_s.mod
 
 # S-wave std model 1: excess mean
 awk '{if ($1=="STAN") {f=$7/$9; x1=$8/$7; x2=$10/$9; df=f*sqrt(x1*x1+x2*x2); print f+df, $2}}' $inp |\
@@ -63,13 +59,6 @@ awk '{if ($1=="STAN") {f=$7/$9; x1=$8/$7; x2=$10/$9; df=f*sqrt(x1*x1+x2*x2); pri
 # S-wave std model 2: excess mean
 awk '{if ($1=="STAN") {f=$7/$9; x1=$8/$7; x2=$10/$9; df=f*sqrt(x1*x1+x2*x2); print f-df, $2}}' $inp |\
  awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > sd2_s2.mod
-
-#awk '{if ($1=="STAN") print $3/$5, $2}' $inp  |\
-# awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > classicAvg_s.mod
-#psxy classicAvg_s.mod -JX -R -W5/255/200/200 -O -K -N  >> $output
-
-#awk '{if ($1=="STAN") print $3/$5, $2}' resmcns.dat |\
-# awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > min_s.mod
 
 awk '{if ($1=="STAN") print $11/$12, $2}' $inp |\
  awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' > maxProb_s.mod
@@ -92,13 +81,12 @@ test -f $picks || exit
 awk '{if ($1=="RES") print $2, $3, $4}' "$inp" > t1
 awk '{if ($1!="#" && $2!="NA") print $1, $2, $4, $5, $6}' "$picks" | sort | uniq > rec.dat
 paste t1 rec.dat > recdata
-stac=staCors_mcmc.dat
-awk '{print $4,$2,$3}' recdata > "$stac"
-echo "station corrections saved:"
-ls "$PWD/$stac"
+awk '{print $4,$2,$3}' recdata > tmp
 
 ls stations.dat
 test -f stations.dat || exit
-paste stations.dat staCors_mcmc.dat |\
+paste stations.dat tmp |\
 awk '{printf "%5s %3d %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",$10,$1,$2,$3,$4,$11,$12,$7,$8}' > stations.out
-ls stations.out
+echo "station output file with corrections:"
+ls "$PWD/stations.out"
+rm tmp rec.dat

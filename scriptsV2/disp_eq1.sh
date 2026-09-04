@@ -128,3 +128,4 @@ ls $PWD/eq$eqn.ps
 ls $PWD/eq$eqn.png
 [[ "$(uname)" == "Darwin" ]] && open eq$eqn.png
 
+rm tmpxy.grd  tmp.cpt

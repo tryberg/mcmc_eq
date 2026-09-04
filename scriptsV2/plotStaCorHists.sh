@@ -14,3 +14,4 @@ test -f synStaCors.dat && echo "also plotting synStaCors.dat"
 # histByGroup written by Claude:
 histByGroup.sh mydata.txt recdata
 
+rm recdata tmpx mydata.txt

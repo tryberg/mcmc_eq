@@ -3,7 +3,7 @@
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 # ported to gmt6 Oct 30, 2024
 
-rm gmt.*
+rm -f gmt.*
 gmt set MEASURE_UNIT INCH
 gmt set FONT_ANNOT_PRIMARY 8 
 gmt set HEADER_FONT_SIZE 8
@@ -178,7 +178,7 @@ awk '{if ($1=="STAN") {f=$7/$9; x1=$8/$7; x2=$10/$9; df=f*sqrt(x1*x1+x2*x2); pri
 
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> "${output}.ps"
 
-rm configa.dat
+rm configa.dat tmpy hist*grd colv.cpt
 gmt psconvert -Tg "${output}.ps" -A
 ls "$PWD/${output}.ps"
 ls "$PWD/${output}.png"

@@ -29,3 +29,5 @@ disp_compare.sh
 # new station correction plots
 plotStaCorHists.sh
 disp_staCorMap.sh picks.mcmc
+
+rm gmt.*

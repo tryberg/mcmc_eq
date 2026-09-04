@@ -133,4 +133,4 @@ echo "Z = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i -Gw
     
 done
 
-rm t77
+rm t77 tjp tmp.cpt

@@ -112,8 +112,8 @@ tail -n +2 | gmt xyz2grd -Gtmpxy.grd -R -I"$dx/$dz" -V -F
 
 gmt grd2cpt -Chot -Z -D tmpxy.grd > tmp.cpt
 gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
+awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Ggreen -W.5p,white -Exy+p0.5p,white -K -O -m -N >> "$output"
+awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m -N >> "$output"
 
 awk '{print $8}' t77 > tjp
 m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
@@ -125,4 +125,4 @@ gmt psconvert -Tg $output -A
 ls "$PWD/loc_eqz2_${eqn}.p"*
 [[ "$(uname)" == "Darwin" ]] && open "loc_eqz2_${eqn}.png"
     
-#rm t77
+rm t77 tjp tmp.cpt tmpxy.grd

@@ -75,11 +75,11 @@ awk '{print $8, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> e
 awk '{print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $5, $4, $8/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps
 
-awk '{if ($5<'$zmin') print $0}' resmcna.tmp > zbad.tmp
-na=$(cat zbad.tmp | wc -l)
+awk '{if ($5<'$zmin') print $0}' resmcna.tmp > zbad.txt
+na=$(cat zbad.txt | wc -l)
 if [ "$na" -gt 0 ]; then
     echo "WARNING: $na events above model plotted in green:"
-    cat zbad.tmp
+    cat zbad.txt
 fi
 awk '{if ($5<'$zmin') print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 #awk '{if ($5<'$zmin') print '$zmin', $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
@@ -108,4 +108,4 @@ ls $PWD/eq.ps
 ls $PWD/eq.png
 [[ "$(uname)" == "Darwin" ]] && open eq.png
 
-rm t1 rec.dat resmcna.tmp
+rm t1 rec.dat resmcna.tmp recdata zbad.txt

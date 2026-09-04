@@ -106,7 +106,7 @@ gmt grdimage tmp.grd -R -B0 -JX -Ctmp.cpt -K -O >> evo.ps
 echo "$eq $ymin $eq $ymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B0 -W -K -O  >> evo.ps
 echo "$bi $ymin $bi $ymax" | awk '{print $1, $2; print $3, $4; print "#"}' | gmt psxy -JX -R -B0 -W -K -O  >> evo.ps
 
-gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -Bxaf+l"evaluated models" -Bya+l"Dim" -BnSW -K -O >> evo.ps
+gmt psbasemap -JX5/2 -R$xmin/$xmax/$ymin/$ymax -Bxaf+l"evaluated models" -Bya+l"Dimension" -BnSW -K -O >> evo.ps
 
 gmt psbasemap -JX-1/2 -R0/1/$ymin/$ymax -Bx0 -Bya -BnSEw -K -O -X5 >> evo.ps
 

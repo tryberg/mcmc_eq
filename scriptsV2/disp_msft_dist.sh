@@ -53,11 +53,11 @@ egrep RES "$res" >> res.dat
 egrep NOISE "$res" | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17}' >> res.dat
 
 # Prepare pick file with that quake
-cat "$picks" > test
+cat "$picks" > tmpt
 
-"$exe" "$cfg" res.dat test > predictions
+"$exe" "$cfg" res.dat tmpt > predictions
 
-awk '{print $0}' test > t0
+awk '{print $0}' tmpt > t0
 
 paste predictions t0 > residuals.dat
 
@@ -98,7 +98,7 @@ echo $xmax 350 ""$noq" quakes"      | gmt pstext -JX -R -B0 -K -Wblack -O -V -F+
 
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> msftp.ps
 
-rm -f t residuals.dat predictions res.dat
+rm -f t residuals.dat predictions res.dat t0 tmpt
 
 gmt ps2raster -Tg msftp.ps -Au
 ls "$PWD/msftp.p"*

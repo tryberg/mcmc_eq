@@ -88,10 +88,8 @@ echo -$xmax $ymax  "m/s="$m"+-"$s" s" | gmt pstext -JX -R -K -O -N -F+jTL -D0.1c
 echo data noise
 bw=0.0010
 ymax=`egrep mod tmpx | awk '{print $6}' | gmt pshistogram -T$bw -I -o3 | gmt info -I10 -C -o1`
-egrep mod tmpx | awk '{print $6,$7,$8,$9,$10,$11,$12,$13}' > t3
-#xmax=`awk '{for(i=1;i<=NF;i++){v=($i<0)?-$i:$i; if(v>m)m=v}} END{print m}' t3 | gmt info -C -I0.2 -o1`
-#xmax=$(awk -v a="$xmax" -v b="1.0" 'BEGIN{print (a<b)?a:b}')
-xmax=`gmt info t3 -C -i4 -I.25 -o1` # max range of s-wave qual 0 column
+egrep mod tmpx | awk '{print $5,$6,$7,$8,$9,$10,$11,$12,$13}' > t3
+xmax=`gmt info t3 -C -i1,2,5,6 | awk '{for(i=2;i<=NF;i+=2) print $i}' | sort -rn | head -1 | gmt info -C -I.2 -o1` # the max of qual 0/1 PandS
 
 gmt psbasemap -JX2/2 -R0.0/$xmax/0/$ymax -Bxa+l"Data noise [s]" -Byaf -Bxaf -BSwen -K -O -X2.35 >> $out.ps
 
@@ -107,6 +105,7 @@ gmt psbasemap -JX2/2 -R0.0/$xmax/0/$ymax -Bxa+l"Data noise [s]" -Byaf -Bxaf -BSw
 #echo 0.1625 | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W2,255/200/200 -O -K -N >> $out.ps
 
 echo "start noise"
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G0     -K -O -F -V -i0 >> $out.ps
 #s=$(egrep mod tmpx | awk '{print $6}' | gmt math STDIN MEAN = /dev/stdout | head -1)
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,0/0/255,dotted -O -K -N >> $out.ps
 #s=$(egrep mod tmpx | awk '{print $7}' | gmt math STDIN MEAN = /dev/stdout | head -1)
@@ -115,10 +114,10 @@ echo "start noise"
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,85/85/255,dotted -O -K -N >> $out.ps
 #s=$(egrep mod tmpx | awk '{print $9}' | gmt math STDIN MEAN = /dev/stdout | head -1)
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,128/128/255,dotted -O -K -N >> $out.ps
-egrep mod tmpx | awk '{print $6}' | gmt pshistogram -JX -R -T$bw -Z0 -G0/0/255 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $7}' | gmt pshistogram -JX -R -T$bw -Z0 -G42/42/255 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $8}' | gmt pshistogram -JX -R -T$bw -Z0 -G85/85/255 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -T$bw -Z0 -G128/128/255 -K -O -F -V >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G0/0/255     -K -O -F -V -i1 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G42/42/255   -K -O -F -V -i2 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G85/85/255   -K -O -F -V -i3 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G128/128/255 -K -O -F -V -i4 >> $out.ps
 
 #s=$(egrep mod tmpx | awk '{print $10}' | gmt math STDIN MEAN = /dev/stdout | head -1)
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/0/0,dotted -O -K -N >> $out.ps
@@ -128,10 +127,10 @@ egrep mod tmpx | awk '{print $9}' | gmt pshistogram -JX -R -T$bw -Z0 -G128/128/2
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/85/85,dotted -O -K -N >> $out.ps
 #s=$(egrep mod tmpx | awk '{print $13}' | gmt math STDIN MEAN = /dev/stdout | head -1)
 #echo $s | awk '{print $1, 0; print $1, '$ymax'}' | gmt psxy -JX -R -W1,255/128/128,dotted -O -K -N >> $out.ps
-egrep mod tmpx | awk '{print $10}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/0/0 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $11}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/42/42 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $12}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/85/85 -K -O -F -V >> $out.ps
-egrep mod tmpx | awk '{print $13}' | gmt pshistogram -JX -R -T$bw -Z0 -G255/128/128 -K -O -F -V >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G255/0/0     -K -O -F -V -i5 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G255/42/42   -K -O -F -V -i6 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G255/85/85   -K -O -F -V -i7 >> $out.ps
+gmt pshistogram t3 -JX -R -T$bw -Z0 -G255/128/128 -K -O -F -V -i8 >> $out.ps
 echo "end noise"
 
 # station correction P
@@ -165,26 +164,31 @@ echo -$xmax $ymax  "m/s="$m"+-"$s" s" | gmt pstext -JX -R -K -O -N -F+jTL -D0.1c
 
 # Vp
 gmt psbasemap -JX1.2/-5 -R3/8/-5/32 -B1f0.5:"Vp [km/s]":/10f5g1000:"Depth [km]":Swen -K -O -X2.25 -Y0 >> $out.ps
-egrep EZ $res | awk '{print 4, $5}' | gmt psxy -JX -R -Sc0.05 -Ggreen -K -O >> $out.ps
-awk '{print 3.5,$4}' $quakes | gmt psxy -JX -R -Sc0.05 -Gdarkgreen -K -O >> $out.ps
+egrep EZ $res | awk '{print 3.5, $5}' | gmt psxy -JX -R -Sc0.05 -Wgreen -K -O >> $out.ps
+awk '{print 3.2,$4}' $quakes | gmt psxy -JX -R -Sc0.05 -Wdarkgreen -K -O >> $out.ps
 
 test -f model.inp && awk '{print $2, $1}' model.inp | gmt psxy -JX -R -W1,magenta -K -O >> $out.ps
 test -f vp_generic.xy && gmt psxy vp_generic.xy -JX -R -W1,blue -K -O >> $out.ps
+test -f model2.inp && awk '{print $2, $1}' model2.inp | gmt psxy -JX -R -W1,magenta,.. -K -O >> $out.ps
+
 awk '{if ($1=="STAN") print $7, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K -N  >> $out.ps
 awk '{if ($1=="STAN") print $7-$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> $out.ps
 awk '{if ($1=="STAN") print $7+$8, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K -N  >> $out.ps
 
 # Vp/Vs
 gmt psbasemap -JX1.2/-5 -R1.501/2/-5/32 -B0.2f0.1:"Vp/Vs":/10f5g1000:"Depth [km]":SwEn -K -O -X1.35  >> $out.ps
-test -f model.inp && awk '{print $3, $1}' model.inp | gmt psxy -JX -R -W1,blue -K -O >> $out.ps
+test -f model.inp && awk '{print $3,$1}' model.inp | gmt psxy -JX -R -W1,magenta -K -O >> $out.ps
+test -f model2.inp && awk '{print $2/$3, $1}' model2.inp | gmt psxy -JX -R -W1,magenta,.. -K -O >> $out.ps
+
 awk '{if ($1=="STAN") print $9, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W1,red -O -K  >> $out.ps
 awk '{if ($1=="STAN") print $9-$10, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K  >> $out.ps
 awk '{if ($1=="STAN") print $9+$10, $2}' $res | awk '{if (NR==1) {v0=$1;} print v0, $2; print $1, $2; v0=$1;}' | gmt psxy -JX -R -W,gray -O -K  >> $out.ps
 
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> $out.ps
 
+test -f $out.png && cp $out.png ${out}0.png
 gmt psconvert -Tg $out.ps -A
 ls "$PWD/$out.p"*
 
 [[ "$(uname)" == "Darwin" ]] && open $out.png
-
+rm t1 t2 t3

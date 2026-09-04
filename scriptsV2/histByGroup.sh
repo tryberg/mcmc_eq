@@ -237,4 +237,4 @@ EOF
 
 done
 
-rm -f "$legendFile"
+rm -f "$legendFile" stmp ptmp
