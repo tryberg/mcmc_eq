@@ -659,9 +659,9 @@ for (i=0; i<MAX_STAT; i++) old_model.sres[i]=-99999;
                 fprintf(stderr, "Error: model.dat is empty or contains no valid 'STAN' lines - check the file format\n");
                 exit(1);
         }
-        if (old_model.dimension != gh.nz)
+        if (old_model.dimension -1 != gh.nz)
         {
-                fprintf(stderr, "Error: model.dat has %d layer(s), but config specifies nz = %d - these must match exactly\n", old_model.dimension, gh.nz);
+                fprintf(stderr, "Error: model.dat has %d layer(s), but config specifies nz = %d - these must match exactly\n", old_model.dimension-1, gh.nz);
                 exit(1);
         }
 

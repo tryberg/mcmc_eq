@@ -41,4 +41,5 @@ if [[ "$bad_ratio_count" -ne 0 ]]; then
 fi
 
 # Construct output (could also be done with velModTable2trondVelFiles)
-awk '{print "STAN", $1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' "$synth_model"
+#awk '{print "STAN", $1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' "$synth_model"
+awk '{printf "STAN %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f\n",$1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' "$synth_model"
