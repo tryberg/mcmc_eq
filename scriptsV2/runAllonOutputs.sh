@@ -6,7 +6,7 @@ if [ "$#" -ne 2 ]; then
 fi
 # evaluated models threshold:
 emt=$1
-prms=$2
+prms=$2 #use 100 as default if unsure
 
 # run all post processing scripts at once with defaults:
 dispe.sh $emt
