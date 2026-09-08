@@ -58,11 +58,6 @@ egrep EZ "$res" > resmcna.tmp
 gmt psbasemap -JX"$xs/$ys" -R"$xmin/$xmax/$ymin/$ymax" -Bxaf+l"X [km]" -Byaf+l"Y [km]" -BNWse -K -X0.7 -Y2.9 > eq.ps
 
 paste t1 rec.dat > recdata
-stac=staCors_mcmc.dat
-awk '{print $4,$2,$3}' recdata > "$stac"
-echo "station corrections saved:"
-ls "$PWD/$stac"
-
 awk '{print $6, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O >> eq.ps
 awk '{if ($2>0) print $6, $7, $2*0.8}' recdata | gmt psxy -JX -R -Sc -K -O >> eq.ps
 awk '{if ($2<0) print $6, $7, -$2*0.8}' recdata | gmt psxy -JX -R -Sx  -K -O >> eq.ps
@@ -80,11 +75,11 @@ awk '{print $8, $7}' recdata | gmt psxy -JX -R -St0.15 -Glightblue -K -O -N >> e
 awk '{print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Gred -K -O >> eq.ps
 awk '{print $5, $4, $8/2.0, $7/2.0}' resmcna.tmp | gmt psxy -JX -R -Sc0.001 -Exy0.01 -K -O -N >> eq.ps
 
-awk '{if ($5<'$zmin') print $0}' resmcna.tmp > zbad.tmp
-na=$(cat zbad.tmp | wc -l)
+awk '{if ($5<'$zmin') print $0}' resmcna.tmp > zbad.txt
+na=$(cat zbad.txt | wc -l)
 if [ "$na" -gt 0 ]; then
     echo "WARNING: $na events above model plotted in green:"
-    cat zbad.tmp
+    cat zbad.txt
 fi
 awk '{if ($5<'$zmin') print $5, $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
 #awk '{if ($5<'$zmin') print '$zmin', $4}' resmcna.tmp | gmt psxy -JX -R -Sc0.04 -Ggreen -K -O -N >> eq.ps
@@ -113,11 +108,4 @@ ls $PWD/eq.ps
 ls $PWD/eq.png
 [[ "$(uname)" == "Darwin" ]] && open eq.png
 
-# output new catalog: {'X','Y','Z','OT','dOT','ex','ey','ez'}
-cat="quakes_mcmc.dat"
-echo "# {'X','Y','Z','OT','dOT','ex','ey','ez'} (%8.3f %8.3f %8.3f %015.3f %7.3f %f %f %f\n)" > "$cat"
-awk '{printf "%8.3f %8.3f %8.3f %015.3f %7.3f %f %f %f\n",$3,$4,$5,$9,$10,$6,$7,$8}' resmcna.tmp >> "$cat"
-echo "new output catalog saved:"
-ls "$PWD/$cat"
-
-rm t1 rec.dat resmcna.tmp
+rm t1 rec.dat resmcna.tmp recdata zbad.txt

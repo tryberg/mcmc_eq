@@ -21,7 +21,9 @@ nl=`cat $synth_model | wc -l`
 [[ $nz -eq $nl ]] || { echo "Error: $nz != $nl"; exit 1; }
 
 # construct input file (could also be done with velModTable2trondVelFiles)
-awk '{print "STAN", $1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' $synth_model > model.dat
+modelDotInp2modelDotDat.sh $synth_model > model.dat
+#awk '{print "STAN", $1, $2, 0, $3, 0, $2, 0, $3, 0, $2, $3, 0.01}' $synth_model > model.dat
+
 cp model.dat res.dat
 awk '{print "EQ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
 awk '{print "EZ",$1, $2, $3, $4,0,0,0,0,0,0,0}' quakes.dat >> res.dat
@@ -49,7 +51,7 @@ awk 'BEGIN {srand(1*"'$rseed'")}{do {x1=2.0*rand()-1; x2=2.0*rand()-1; s=x1*x1+x
 fw $cfg res.dat synths_wo_noise > t1
 fw $cfg res.dat synths_with_noise > t1
 #cp synths_with_noise picks
-awk '{if ($1=="#") print $0; else printf "%4s %03d %1s %8.3f %8.3f %8.3f %8.3f %d\n",$1,$2,$3,$4,$5,$6,$7,$8}' synths_with_noise > picks.mcmc
+awk '{if ($1=="#") print $0; else printf "%4s %03d %1s %8.3f %8.3f %8.3f %8.3f %d\n",$1,$2,$3,$4,$5,$6,$7,$8}' synths_with_noise > picks_syn.mcmc
 
 # clean-up
 #rm synths_with_noise synths_wo_noise 

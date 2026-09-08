@@ -56,7 +56,7 @@ export LC_NUMERIC=C.UTF-8
 
 eqn=$eqn0
 echo "plotting quake: $eqn"
-output="loc_eq${eqn}.ps"
+output="loc_eqz2_${eqn}.ps"
 
 p="."
 nx=$(awk '{if (NR==2) print $1}' "$p/$cfg")
@@ -77,8 +77,8 @@ awk '{if (($3>(1*"'$bi'")) && ($4=="'"$eqn"'")) print $0}' tmpx | grep EQ > t77
 
 dx=`echo $d | awk '{print $1+$1*0.25}'`
 dy=$dx
-dz=$dx
-echo "grid increment: $dx"
+dz=`echo $dx | awk '{print $1*2}'`
+echo "x grid increment: $dx"
 # x-y
 gmt psbasemap -JX6 -R"$x0/$x1/$y0/$y1" -BNWes -Bxaf+l"X [km]" -Byaf+l"Y [km]" -K -P -Y4.5 > "${output}"
 
@@ -91,10 +91,19 @@ tail -n +2 | gmt xyz2grd -Gtmpxy.grd -R -I"$dx/$dy" -V -F
 gmt grd2cpt -Chot -Z -D tmpxy.grd > tmp.cpt
 
 gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $4}' "$f" | gmt psxy -JX -R -Sc0.075 -Glightblue -K -O -m >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $4, $6, $7}' "$f" | gmt psxy -JX -R -Sc0.03 -Gblue -Exy0.01 -K -O -m >> "$output"
+awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $4, $6, $7}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m >> "$output"
+
+awk '{print $6}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "X = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i -Gwhite >> "$output"
+awk '{print $7}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Y = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.3i -Gwhite >> "$output"
 
 # x-z
+echo "z grid increment: $dz"
 gmt psbasemap -JX6/-3 -R"$x0/$x1/$z0/$z1" -BSWen -Bxaf+l"X [km]" -Byaf+l"Z [km]" -K -P -Y-3 -O >> "${output}"
 
 awk '{print $6, $8-"'"$z0"'"}' t77 | awk '{print int($1/"'"$dx"'"), int($2/"'"$dy"'")}' | sort -n | \
@@ -103,17 +112,17 @@ tail -n +2 | gmt xyz2grd -Gtmpxy.grd -R -I"$dx/$dz" -V -F
 
 gmt grd2cpt -Chot -Z -D tmpxy.grd > tmp.cpt
 gmt grdimage tmpxy.grd -R -B0 -JX -Ctmp.cpt -K -O >> "$output"
-#awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
-#awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.05 -Gblue -Exy0.01 -K -O -m >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Glightblue -K -O -m >> "$output"
-awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.05 -Gblue -Exy0.01 -K -O -m >> "$output"
+awk '{if (($2=="'"$eqn"'") && ($1=="EQ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Ggreen -W.5p,white -Exy+p0.5p,white -K -O -m -N >> "$output"
+awk '{if (($2=="'"$eqn"'") && ($1=="EZ")) print $3, $5, $6, $8}' "$f" | gmt psxy -JX -R -Sc0.075 -Gblue -W.5p,white -Exy+p0.5p,white -K -O -m -N >> "$output"
 
-#awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.1 -Gwhite -K -O -m >> "$output"
-#awk '{if (($2=="'"$eqn"'") && ($1=="EM")) print $3, $5}' "$f" | gmt psxy -JX -R -Sc0.05 -Gred -K -O -m >> "$output"
+awk '{print $8}' t77 > tjp
+m=$(awk '{i++; s+=$1;} END {printf "%5.2f\n", s/i;}' tjp)
+s=$(awk -v mean="$m" '{i++; s+=($1-mean)*($1-mean);} END {printf "%5.2f\n", sqrt(s/(i-1));}' tjp)
+echo "Z = $m +/- $s km" | gmt pstext -JX -R -K -O -N -F+cTL+jTL -D0.1i/-0.1i -Gwhite >> "$output"
 
 echo 0 0 | gmt psxy -JX -R -B0 -Sc0.001 -O >> "$output"
 gmt psconvert -Tg $output -A
-ls "$PWD/loc_eq${eqn}.p"*
-[[ "$(uname)" == "Darwin" ]] && open "loc_eq${eqn}.png"
+ls "$PWD/loc_eqz2_${eqn}.p"*
+[[ "$(uname)" == "Darwin" ]] && open "loc_eqz2_${eqn}.png"
     
-#rm t77
+rm t77 tjp tmp.cpt tmpxy.grd
