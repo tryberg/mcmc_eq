@@ -17,8 +17,10 @@ ls "$cfg"
 [ -f "$cfg" ] || exit
 
 exe=analyse_eq
-which "$exe"
-[ -z "$(whereis -q -b "$exe")" ] && echo "can't find $exe" && exit
+if ! command -v $exe >/dev/null 2>&1; then
+    echo "Error: $exe is required but not found in PATH." >&2
+    exit 1
+fi
 
 eq=$(awk '{if (NR==30) print $1}' "$cfg") # needs to be past burn-in phase!
 vv=$(awk '{if (NR==30) print $2}' "$cfg")

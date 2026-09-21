@@ -87,6 +87,7 @@ ls stations.dat
 test -f stations.dat || exit
 paste stations.dat tmp |\
 awk '{printf "%5s %3d %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",$10,$1,$2,$3,$4,$11,$12,$7,$8}' > stations.out
+#paste stations.dat tmp |awk '{printf "%3d %8.3f %8.3f %8.3f %8.3f %8.3f %5s\n",$1,$2,$3,$4,$8,$9,$7}' > stations.out
 echo "station output file with corrections:"
 ls "$PWD/stations.out"
 rm tmp rec.dat

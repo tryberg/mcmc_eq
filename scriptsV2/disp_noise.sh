@@ -3,7 +3,7 @@
 # V2 converted from csh to bash by chatcpt and J. Pesicek, Oct 29, 2024
 # ported to gmt6 Oct 30, 2024
 
-rm gmt.*
+rm -f gmt.*
 gmt set MEASURE_UNIT INCH
 gmt set FONT_ANNOT_PRIMARY 10
 gmt set HEADER_FONT_SIZE 10
@@ -17,8 +17,9 @@ if [ ! -f tmpx ]; then exit; fi
 egrep mod tmpx | awk '{print $5, $6, $7, $8, $9, $10, $11, $12, $13}' > t1
 
 bw=0.001
-ymax=`gmt pshistogram -I t1 -T$bw -o3`
+ymax=`gmt pshistogram -I t1 -T$bw -o3 | gmt info -C -o1 -I500`
 xmax=`gmt info t1 -C -i1,2,5,6 | awk '{for(i=2;i<=NF;i+=2) print $i}' | sort -rn | head -1 | gmt info -C -I.2 -o1` # the max of qual 0/1 PandS
+xmax=$(awk -v a="$xmax" -v b="1.0" 'BEGIN { print (a < b) ? a : b }')
 
 gmt psbasemap -JX8/6 -R0/$xmax/0/$ymax -Bxafg0.05:"Seconds" -Byaf -BnSWe -K > noise.ps
 
