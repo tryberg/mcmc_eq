@@ -282,6 +282,7 @@ int main(int argc, char *argv[])
  int acce,reject;
 
  int deci,j_max_start, j_max_main,true_random,topo_shift,topo_flag;
+ int swap_p, swap_s;	/* which travel-time tables this proposal rebuilds (pointer-swap bookkeeping) */
 
 
  int nmod,nsa,nsr,npa,npr,nba,nbr,nda,ndr,nna,nnr,nra,nrr,nma,nmr,nqa,nqr;
@@ -861,13 +862,28 @@ fprintf(stderr,"reading noise \n");
   }
 
 
-  for (iz=0; iz<gh.nz; iz++) for (ix=0; ix<gh.nz; ix++) for (jx=0;jx<nxmod; jx++) {tttpr_old[iz][ix][jx]=tttpr[iz][ix][jx]; tttsr_old[iz][ix][jx]=tttsr[iz][ix][jx];}
   copy_model(&new_model,&old_model);
   new_model.number=j;
 // 1st phase: search for epicenters accelerated
    if (j<=j_max_start) {testcase=rand_eq_int(strlen(pstring_start));ctestcase=pstring_start[testcase]; fac=epi_search;}
 // 2nd phase: search for model as in config file
    if (j>j_max_start) {testcase=rand_eq_int(strlen(pstring_main));ctestcase=pstring_main[testcase]; fac=1.0;}
+
+// Which travel-time tables does this proposal rebuild?
+//   P,M,B,D  -> calct==3 : both P and S tables recomputed
+//   V        -> calct==2 : only S table recomputed (P table is read, must stay valid)
+//   Q,R,N    -> calct==0 : neither table touched
+// Only swap a table's current<->scratch pointer if that table will be fully overwritten by
+// setup_table_new; the accepted table is then preserved in *_old for restore on reject.
+// A table that is only read (e.g. P during a V move) must NOT be swapped.
+   swap_p = (ctestcase=='P' || ctestcase=='M' || ctestcase=='B' || ctestcase=='D');
+   swap_s = (ctestcase=='V' || ctestcase=='P' || ctestcase=='M' || ctestcase=='B' || ctestcase=='D');
+   {
+     float ***tswap;
+     if (swap_p) {tswap=tttpr; tttpr=tttpr_old; tttpr_old=tswap;}
+     if (swap_s) {tswap=tttsr; tttsr=tttsr_old; tttsr_old=tswap;}
+   }
+
   model_not_valid=0;
 //fprintf(stderr,"test %c\n",ctestcase);
    decision="XX";
@@ -1169,8 +1185,9 @@ fprintf(stderr,"reading noise \n");
    old_ll=new_ll;
    old_rms=new_rms;
    old_misfit=new_misfit;
-// update tt tables
-   for (iz=0; iz<gh.nz; iz++) for (ix=0; ix<gh.nz; ix++) for (jx=0; jx<nxmod; jx++) {tttpr_old[iz][ix][jx]=tttpr[iz][ix][jx]; tttsr_old[iz][ix][jx]=tttsr[iz][ix][jx];}
+// accepted: the newly computed tables are already in the current buffers (tttpr/tttsr).
+// The swap performed at proposal time left the previous accepted tables in *_old, which now
+// simply become free scratch. No copy needed (was a full nz*nz*nxmod element copy).
 // output
    if (((int)(acce/deci))*deci==acce) print_model_raw(&old_model,s,old_rms, "mod",decision);
   }
@@ -1179,8 +1196,14 @@ fprintf(stderr,"reading noise \n");
   {  
   
 //   fprintf(stderr,"Test R %8d %2s %4ld RMS=%16.10f [s] %f %5.1f accepted\n",j,decision,new_model.dimension,new_rms,alpha12,(100.0*acce/(acce+reject)));
-// restore old tt tables  
-   for (iz=0; iz<gh.nz; iz++) for (ix=0; ix<gh.nz; ix++) for (jx=0; jx<nxmod; jx++) {tttpr[iz][ix][jx]=tttpr_old[iz][ix][jx]; tttsr[iz][ix][jx]=tttsr_old[iz][ix][jx];}
+// rejected: discard the newly computed tables by swapping the accepted ones (in *_old) back
+// into the current buffers. Only tables that were swapped at proposal time need restoring.
+// This replaces a full nz*nz*nxmod element copy with an O(1) pointer swap.
+   {
+     float ***tswap;
+     if (swap_p) {tswap=tttpr; tttpr=tttpr_old; tttpr_old=tswap;}
+     if (swap_s) {tswap=tttsr; tttsr=tttsr_old; tttsr_old=tswap;}
+   }
 // count rejections
    reject=reject+1;
    if (ctestcase=='P') npr++; 

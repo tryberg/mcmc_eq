@@ -7,12 +7,19 @@ float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttt
         float sum;
 	float rmsp0, rmss0, rmsp1, rmss1, rmsp2, rmss2, rmsp3, rmss3; /* rms value (data fit) for this model */
 	float station_correction;
+	int surf_cell;		/* cell index at z=0, constant for the whole model (eikonal==0 path) */
+	float surf_vp, surf_vs;	/* velocities in that cell, hoisted out of the pick loops */
 
 
 	rmsp0=0.0; rmss0=0.0;
 	rmsp1=0.0; rmss1=0.0;
 	rmsp2=0.0; rmss2=0.0;
 	rmsp3=0.0; rmss3=0.0;
+
+// hoist the constant surface-cell lookup out of the per-pick loops (find_in_cell is O(dimension))
+	surf_cell=find_in_cell(m,0.0);
+	surf_vp=m->vp[surf_cell];
+	surf_vs=surf_vp/m->vpvs[surf_cell];
 
 
 	if (flag==1) {*mfp0=rmsp0; *mfs0=rmss0; *mfp1=rmsp1; *mfs1=rmss1; *mfp2=rmsp2; *mfs2=rmss2; *mfp3=rmsp3; *mfs3=rmss3; return(1.0);}
@@ -42,7 +49,7 @@ float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttt
 		{
 			dist = dst(d[i].p_picks[j].x, m->eq[i].x, d[i].p_picks[j].y, m->eq[i].y);
 			tp=0;
-			if (eikonal==0) tp = sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/m->vp[find_in_cell(m,0.0)];
+			if (eikonal==0) tp = sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/surf_vp;
  			if (eikonal==1) tp = traveltimet(tttp[d[i].p_picks[j].layer], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].p_picks[j].w1+traveltimet(tttp[d[i].p_picks[j].layer+1], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].p_picks[j].w2;
 			station_correction=m->pres[d[i].p_picks[j].st_id];
 //fprintf(stderr,"XXX P %d %f\n",d[i].p_picks[j].st_id,station_correction);
@@ -62,7 +69,7 @@ float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttt
 		{
 			dist = dst(d[i].s_picks[j].x, m->eq[i].x, d[i].s_picks[j].y, m->eq[i].y);
 			ts=0;
-			if (eikonal==0) ts = sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/(m->vp[find_in_cell(m,0.0)]/m->vpvs[find_in_cell(m,0.0)]);
+			if (eikonal==0) ts = sqrt(dist*dist+m->eq[i].z*m->eq[i].z)/surf_vs;
  			if (eikonal==1) ts = traveltimet (ttts[d[i].s_picks[j].layer], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].s_picks[j].w1+traveltimet(ttts[d[i].s_picks[j].layer+1], gh.nx, gh.ny, gh.nz, gh.h, dist, m->eq[i].z, gh.z0)*d[i].s_picks[j].w2;
 
 			station_correction=m->sres[d[i].s_picks[j].st_id];
@@ -104,15 +111,32 @@ float cal_fit_newx (struct Model *m, struct DATA *d, float ***tttp, float ***ttt
 
 
 // rms
-		
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==0) rmsp0=rmsp0+(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum)*(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==0) rmss0=rmss0+(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum)*(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==1) rmsp1=rmsp1+(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum)*(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==1) rmss1=rmss1+(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum)*(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==2) rmsp2=rmsp2+(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum)*(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==2) rmss2=rmss2+(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum)*(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_p; k++) if (d[i].p_picks[k].cl==3) rmsp3=rmsp3+(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum)*(d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum);
-		for (k=0; k<d[i].nobs_s; k++) if (d[i].s_picks[k].cl==3) rmss3=rmss3+(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum)*(d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum);
+// single pass per phase, binned by pick class (was 8 separate loops)
+		{
+			float r;
+			for (k=0; k<d[i].nobs_p; k++)
+			{
+				r=d[i].p_picks[k].t_pred-d[i].p_picks[k].t-sum;
+				switch (d[i].p_picks[k].cl)
+				{
+					case 0: rmsp0+=r*r; break;
+					case 1: rmsp1+=r*r; break;
+					case 2: rmsp2+=r*r; break;
+					case 3: rmsp3+=r*r; break;
+				}
+			}
+			for (k=0; k<d[i].nobs_s; k++)
+			{
+				r=d[i].s_picks[k].t_pred-d[i].s_picks[k].t-sum;
+				switch (d[i].s_picks[k].cl)
+				{
+					case 0: rmss0+=r*r; break;
+					case 1: rmss1+=r*r; break;
+					case 2: rmss2+=r*r; break;
+					case 3: rmss3+=r*r; break;
+				}
+			}
+		}
 				
 	}
 	*mfp0=rmsp0; *mfs0=rmss0;
