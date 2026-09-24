@@ -6,7 +6,10 @@ CC      = gcc
 #           on the target node or drop -march=native (e.g. use -mtune=generic) for portability.
 # -flto    : link-time optimization; lets the compiler inline find_in_cell/dst/traveltimet across
 #           translation units.
-CFLAGS  = -O3 -march=native -flto
+# -march=native -flto do cause some rounding changes, which can cause some chains to diverge. 
+# Since the speedup is minimal, maybe best to avoid these, although the average solution seems unaffected
+#CFLAGS  = -O3 -march=native -flto
+CFLAGS  = -O3 
 
 all:	 mcmc_eq  analyse_eq fw fw_mod
 

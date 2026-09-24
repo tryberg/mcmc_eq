@@ -108,4 +108,4 @@ ls $PWD/eq.ps
 ls $PWD/eq.png
 [[ "$(uname)" == "Darwin" ]] && open eq.png
 
-rm t1 rec.dat resmcna.tmp recdata zbad.txt
+rm t1 rec.dat resmcna.tmp recdata #zbad.txt
