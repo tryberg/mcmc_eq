@@ -18,7 +18,7 @@
 1.0		# sdev for y dummy
 1.0		# sdev for z
 0.05		# sdev for vel
-0.05		# sdev for vp/vs
+0.0		# sdev for vp/vs
 0.01		# sdev for noise
 1.0 2		# sdev x EQ, factor for epicenter search accelaration
 1.0 		# sdev y EQ
@@ -30,11 +30,11 @@
 30000 200000	# number of models in chain
 500		# output every nth model
 -77	1	# if <0 true random search, otherwise from seed n, 0=str 1=eik
-QN QVRPBDMN	# model modification tests
+QN QRPBDMN	# model modification tests
 0 VRN		# 0-mcmc, 1-prior only, 2-output regular grid, 3-input from model file: V and/or Q R N, i.e 3 QV
 1 dummy 1 	# dummy
 3.5 0.5	0.25    # vp to start with
-1.73	0.3	# vp/vs to start with
+1.73	0.	# vp/vs to start with
 15 5		# cell number to start with
 1.0		# start_noise
 0.0 0.0		# delay & sdev to start with
