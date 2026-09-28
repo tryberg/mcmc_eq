@@ -1,3 +1,6 @@
+# NOTE: for fixed Vp/Vs ratio, line 33 must NOT contain "V", line 21 MUST BE ZERO, and line 37, column 2 MUST ALSO BE ZERO!
+# line 37 column 1 is your fixed vp/vs ratio
+
 # 1. convert hypoDD phase data to mcmc format using convert.m and pha2mcmc.m
 
 # 2. use srun_mcmc_eq.sh (run) with data and config file on a linux cluster:
