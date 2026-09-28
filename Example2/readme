@@ -7,13 +7,14 @@
 sbatch srun_mcmc_eq.sh
 
 # 3. run plotting scripts in scricptsV2 from output dir with rjx files:
+# see also runAllonOutputs.sh
 dispe.sh
-disp_m_average_sl.sh 225000 100 0
+disp_m_average_sl.sh 200000 100 0
 disp_eq.sh picks.mcmc
 
 # optionally
 disp_noise.sh 
-disp_eq_z.sh 225000
+disp_eq_z.sh 200000
 disp_eq_evo.sh
 disp_msft_dist.sh picks.mcmc
 
