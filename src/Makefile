@@ -11,10 +11,10 @@ CC      = gcc
 #CFLAGS  = -O3 -march=native -flto
 CFLAGS  = -O3 
 
-all:	 mcmc_eq  analyse_eq fw fw_mod
+all:	 mcmc_eq  analyse_eq fw fw_mod gmatrix
 
 clean:
-	\rm -f *.o mcmc_eq  fw  core analyse_eq fw_mod
+	\rm -f *.o mcmc_eq  fw  core analyse_eq fw_mod gmatrix
 
 mod_grd.o:  mod_grd.c  mc.h
 	$(CC) $(CFLAGS) -c mod_grd.c -o mod_grd.o
@@ -33,3 +33,6 @@ fw:  fw.c  mc.h time_2d.o mod_grd.o
 
 fw_mod:  fw_mod.c  mc.h time_2d.o mod_grd.o
 	$(CC) $(CFLAGS) fw_mod.c time_2d.o mod_grd.o -o fw_mod -lm 
+
+gmatrix:  gmatrix.c  forward.c  mc.h time_2d.o mod_grd.o
+	$(CC) $(CFLAGS) gmatrix.c time_2d.o mod_grd.o -o gmatrix -lm 

@@ -14,7 +14,7 @@
 
 # for jobs longer than 2 days:
 #SBATCH --qos=seven_days_max
-#SBATCH --time=5-0
+#SBATCH --time=4-0
 
 echo "SLURM_JOBID: " $SLURM_JOBID
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
